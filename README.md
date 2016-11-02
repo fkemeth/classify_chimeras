@@ -56,3 +56,33 @@ ISSUES
 ---------
 
 For questions, please contact (<felix@kemeth.de>), or visit [the GitHub repo](https://github.com/fkemeth/classify_chimeras).
+
+EXAMPLE
+---------
+
+As an illustrative example, we use a chimer state observed by Kuramoto and Battogtokh in
+"Coexistence of Coherence and Incoherence in Nonlocally Coupled Phase Oscillators" (2002),
+in Nonlinear Phenom. Complex Syst. We suppose
+that we have the phases of this chimera state in a numpy matrix A.
+
+    import classify_chimeras as clc
+    import matplotlib as plt
+
+    # Plot a snapshot of the data matrix A
+    plt.plot(A[-1],'.'); plt.show()
+
+![Alt text](/path/to/img.jpg)
+
+
+LICENCE
+---------
+
+
+This work is licenced under Creative Commons Attribution 4.0 International.
+This means you must cite
+
+"A classification scheme for chimera states"
+F.P. Kemeth et al.
+(http://dx.doi.org/10.1063/1.4959804)
+
+if you us this package for publications.
