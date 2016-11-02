@@ -140,7 +140,7 @@ def globaldist(A, nbins=100, phases=False, Ncoarse=1500):
     return np.sqrt(histdat[:, 0])
 
 
-def temporal(A, nbins=100, Ncoarse=1500):
+def temporal(A, nbins=100, phases=False, Ncoarse=1500):
     """Calculate temporal correlation coefficients."""
     print temporal.__doc__
     tstart = time()
@@ -160,6 +160,8 @@ def temporal(A, nbins=100, Ncoarse=1500):
         print "Too many oscillators (N>1500). Taking half the data."
         A = A[:, ::2]
         (T, N) = A.shape
+    if phases:
+        A = np.exp(1.0j * A)
     vacoma = np.zeros(N * (N - 1) / 2, dtype='complex')
     idx = 0
     print "Calculating all pairwise correlation coefficients. This may take a few seconds."
@@ -175,4 +177,5 @@ def temporal(A, nbins=100, Ncoarse=1500):
                                        (float(N * (N - 1) / 2) - float(idx)), 1) + ' seconds left')
                 sys.stdout.flush()
     histdat = np.histogram(np.abs(vacoma), bins=100, range=(0.0, 1.01))[0] / float(N * (N - 1) / 2)
+    print '\nDone!'
     return histdat
