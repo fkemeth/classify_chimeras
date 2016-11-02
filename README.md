@@ -66,12 +66,26 @@ in Nonlinear Phenom. Complex Syst. We suppose
 that we have the phases of this chimera state in a numpy matrix A.
 
     import classify_chimeras as clc
-    import matplotlib as plt
+    import pylab as pl
 
     # Plot a snapshot of the data matrix A
-    plt.plot(A[-1],'.'); plt.show()
+    (T,N) = A.shape
+    pl.plot(np.arange(0,1,1.0/float(N)),A[-1],'.'); pl.show()
 
-![Alt text](/path/to/img.jpg)
+![Snapshot of the phases](/images/kuramoto.jpg)
+
+    # Obtain the fraction of spatially coherent oscillators
+    g0 = clc.spatial(A, boundaries='periodic', phases=True)
+    pl.plot(g0); pl.ylim((0,1.0)); pl.show()
+
+![Fraction of spatially coherent oscillators](/images/kuramoto_g0.jpg)
+
+    # Obtain the fraction of temporarily correlated oscillators
+    h = clc.temporal(A, phases=True)
+    pl.plot(h); pl.ylim((0,0.3)); pl.show()
+    h0 = np.sqrt(h[-1])
+
+![Distribution of temporal correlation coefficients](/images/kuramoto_h.jpg)
 
 
 LICENCE
