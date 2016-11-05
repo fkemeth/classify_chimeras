@@ -92,7 +92,7 @@ LICENCE
 ---------
 
 
-This work is licenced under Creative Commons Attribution 4.0 International.
+This work is licenced under GNU General Public License v3.
 This means you must cite
 
 "A classification scheme for chimera states"
