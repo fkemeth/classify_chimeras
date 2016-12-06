@@ -21,7 +21,7 @@ import sys
 
 def spatial(A, boundaries='no-flux', phases=False, nbins=100):
     """Classify systems with spatial extension using the discrete Laplacian."""
-    print spatial.__doc__
+    print(spatial.__doc__)
     if np.size(A.shape) == 2:
         import stencil_1d as stl
         (T, N) = A.shape
@@ -86,27 +86,27 @@ def spatial(A, boundaries='no-flux', phases=False, nbins=100):
                                              )[0] / float((N1 * N2))
         else:
             raise ValueError('Please select proper boundary conditions: no-flux or periodic.')
-    print '\nDone!'
+    print('\nDone!')
     return histdat[:, 0]
 
 
 def globaldist(A, nbins=100, phases=False, Ncoarse=1500):
     """Classify coherence without a spatial extension using pairwise distances."""
-    print globaldist.__doc__
+    print(globaldist.__doc__)
     tstart = time()
     try:
         (T, N) = A.shape
     except:
         raise ValueError('Please pass a TxN numpy matrix.')
     while N > Ncoarse:
-        print "Too many oscillatrs (N>1000). Coarse grained data is used."
+        print("Too many oscillatrs (N>1000). Coarse grained data is used.")
         A = A[:, ::2]
         (T, N) = A.shape
     if phases is True:
         A = np.exp(1.0j * A)
 
     # Get maximal distance
-    print "Computing the maximal distance. This may take a few seconds."
+    print("Computing the maximal distance. This may take a few seconds.")
     Dmax = 0.0
     for x in range(0, T):
         m, n = np.meshgrid(A[x, :], A[x, :])
@@ -119,11 +119,11 @@ def globaldist(A, nbins=100, phases=False, Ncoarse=1500):
             sys.stdout.write("\r %9.1f" % round((time() - tstart) / (float(x + 1)) *
                                                 (float(T) - float(x)), 1) + ' seconds left')
             sys.stdout.flush()
-    print '\n'
+    print('\n')
 
     # Compute the histograms
     tstart = time()
-    print "Computing histograms. This may take a few seconds."
+    print("Computing histograms. This may take a few seconds.")
     histdat = np.zeros((T, nbins))
     for x in range(0, T):
         m, n = np.meshgrid(A[x, :], A[x, :])
@@ -136,13 +136,13 @@ def globaldist(A, nbins=100, phases=False, Ncoarse=1500):
             sys.stdout.write("\r %9.1f" % round((time() - tstart) / (float(x + 1)) *
                                                 (float(T) - float(x)), 1) + ' seconds left')
             sys.stdout.flush()
-    print '\nDone!'
+    print('\nDone!')
     return np.sqrt(histdat[:, 0])
 
 
 def temporal(A, nbins=100, phases=False, Ncoarse=1500):
     """Calculate temporal correlation coefficients."""
-    print temporal.__doc__
+    print(temporal.__doc__)
     tstart = time()
     try:
         Ashape = len(A.shape)
@@ -157,14 +157,14 @@ def temporal(A, nbins=100, phases=False, Ncoarse=1500):
     except:
         raise ValueError('Please pass a TxN or TxN1xN2 numpy matrix.')
     while N > Ncoarse:
-        print "Too many oscillators (N>1500). Taking half the data."
+        print("Too many oscillators (N>1500). Taking half the data.")
         A = A[:, ::2]
         (T, N) = A.shape
     if phases:
         A = np.exp(1.0j * A)
     vacoma = np.zeros(N * (N - 1) / 2, dtype='complex')
     idx = 0
-    print "Calculating all pairwise correlation coefficients. This may take a few seconds."
+    print("Calculating all pairwise correlation coefficients. This may take a few seconds.")
     for x in range(N - 1):
         for y in range(x + 1, N):
             vacoma[idx] = np.mean(np.conjugate(A[:, x] - np.mean(A[:, x])) * (
@@ -177,5 +177,5 @@ def temporal(A, nbins=100, phases=False, Ncoarse=1500):
                                        (float(N * (N - 1) / 2) - float(idx)), 1) + ' seconds left')
                 sys.stdout.flush()
     histdat = np.histogram(np.abs(vacoma), bins=100, range=(0.0, 1.01))[0] / float(N * (N - 1) / 2)
-    print '\nDone!'
+    print('\nDone!')
     return histdat
