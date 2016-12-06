@@ -1,4 +1,21 @@
 """
+Copyright 2016 Felix P. Kemeth
+
+This file is part of the program classify_chimeras.
+
+classify_chimeras is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+classify_chimeras is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with classify_chimeras.  If not, see <http://www.gnu.org/licenses/>.
+
 Classify coherence/incoherence with the discrete Laplacian.
 
 For systems without a spatial extension, use pairwise distances.
