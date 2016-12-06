@@ -179,7 +179,7 @@ def temporal(A, nbins=100, phases=False, Ncoarse=1500):
         (T, N) = A.shape
     if phases:
         A = np.exp(1.0j * A)
-    vacoma = np.zeros(N * (N - 1) / 2, dtype='complex')
+    vacoma = np.zeros(int(N * (N - 1) / 2), dtype='complex')
     idx = 0
     print("Calculating all pairwise correlation coefficients. This may take a few seconds.")
     for x in range(N - 1):
