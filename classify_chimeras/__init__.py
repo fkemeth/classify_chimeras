@@ -193,6 +193,7 @@ def temporal(A, nbins=100, phases=False, Ncoarse=1500):
                                        (float(idx)) *
                                        (float(N * (N - 1) / 2) - float(idx)), 1) + ' seconds left')
                 sys.stdout.flush()
-    histdat = np.histogram(np.abs(vacoma), bins=100, range=(0.0, 1.01))[0] / float(N * (N - 1) / 2)
+    histdat = np.histogram(np.abs(vacoma), bins=nbins, range=(0.0, 1.01))[
+        0] / float(N * (N - 1) / 2)
     print('\nDone!')
     return histdat

@@ -99,4 +99,4 @@ This means you must cite
 F.P. Kemeth et al.
 (http://dx.doi.org/10.1063/1.4959804)
 
-if you us this package for publications.
+if you use this package for publications.
