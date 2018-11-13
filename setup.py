@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='classify_chimeras',
-      version='1.3',
+      version='1.4',
       description='Functions to classify chimera states.',
       url='http://github.com/fkemeth/classify_chimeras',
       author='Felix Kemeth',
