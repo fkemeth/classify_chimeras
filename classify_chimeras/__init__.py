@@ -40,12 +40,12 @@ def spatial(A, boundaries='no-flux', phases=False, nbins=100):
     """Classify systems with spatial extension using the discrete Laplacian."""
     print(spatial.__doc__)
     if np.size(A.shape) == 2:
-        import stencil_1d as stl
+        from . import stencil_1d as stl
         (T, N) = A.shape
         stencil = stl.create_stencil(N)
         dim = 1
     elif np.size(A.shape) == 3:
-        import stencil_2d as stl
+        from . import stencil_2d as stl
         (T, N1, N2) = A.shape
         A = np.reshape(A, (T, N1 * N2))
         stencil = stl.create_stencil(N1, N2, 1)
