@@ -36,19 +36,23 @@ from time import time
 import sys
 
 
-def spatial(A, boundaries='no-flux', phases=False, nbins=100):
+def spatial(A, boundaries='no-flux', phases=False, nbins=100, Aij=False):
     """Classify systems with spatial extension using the discrete Laplacian."""
     print(spatial.__doc__)
     if np.size(A.shape) == 2:
-        import stencil_1d as stl
         (T, N) = A.shape
-        stencil = stl.create_stencil(N)
-        dim = 1
+        if Aij:
+            D = Aij - np.sum(Aij, axis=0)
+            dim = 0
+        else:
+            import stencil_1d as stl
+            D = stl.create_stencil(N)
+            dim = 1
     elif np.size(A.shape) == 3:
         import stencil_2d as stl
         (T, N1, N2) = A.shape
         A = np.reshape(A, (T, N1 * N2))
-        stencil = stl.create_stencil(N1, N2, 1)
+        D = stl.create_stencil(N1, N2, 1)
         dim = 2
     else:
         raise ValueError('Data matrix should either be TxN or TxN1xN2!')
@@ -58,7 +62,7 @@ def spatial(A, boundaries='no-flux', phases=False, nbins=100):
     # Create matrix with local curvatures
     AS = np.zeros_like(A, dtype='complex')
     for x in range(0, T):
-        AS[x, :] = stencil.dot(A[x])
+        AS[x, :] = D.dot(A[x])
     AS = np.abs(AS)
     # Get maximal curvature
     if dim == 1:
