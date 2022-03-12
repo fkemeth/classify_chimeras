@@ -1,5 +1,5 @@
 """
-Copyright 2016 Felix P. Kemeth
+Copyright 2022 Felix P. Kemeth
 
 This file is part of the program classify_chimeras.
 
@@ -26,7 +26,7 @@ For temporal correlation, use correlation coefficients.
 #                                                                             #
 # http://dx.doi.org/10.1063/1.4959804                                         #
 #                                                                             #
-# Jun 2016                                                                    #
+# Jun 2022                                                                    #
 # felix@kemeth.de                                                             #
 #                                                                             #
 ###############################################################################

@@ -1,5 +1,5 @@
 """
-Copyright 2016 Felix P. Kemeth
+Copyright 2022 Felix P. Kemeth
 
 This file is part of the program classify_chimeras.
 
@@ -22,7 +22,7 @@ Create 1d discrete Laplacian stencil.
 
 ######################################################################################
 #                                                                                    #
-# Jun 2016                                                                           #
+# Jun 2022                                                                           #
 # felix@kemeth.de                                                                    #
 #                                                                                    #
 ######################################################################################
