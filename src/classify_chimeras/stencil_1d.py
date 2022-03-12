@@ -45,7 +45,7 @@ def create_stencil(N):
     idxscollinks = np.empty(N)
     idxscollinks = np.arange(0, N) - 1
     idxscollinks[0] = N - 1
-    stdata[N:3 * N].fill(1.0)
+    stdata[N : 3 * N].fill(1.0)
     idxtmp = idxs
     for x in range(0, 2):
         idxs = np.append(idxs, idxtmp)
