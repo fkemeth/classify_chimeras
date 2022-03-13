@@ -66,29 +66,29 @@ in Nonlinear Phenom. Complex Syst. We suppose
 that we have the phases of this chimera state in a numpy matrix A.
 
     import matplotlib.pyplot as plt
-    
+
     from kuramoto_chimera import integrate
     from classify_chimeras import spatial, temporal
-    
+
     # Integrate Kuramoto phase oscillator system with nonlocal coupling.
-    Ad = integrate()
-    
+    data_dict = integrate()
+
     # Plot a snapshot of the data matrix A
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.scatter(Ad["xx"], Ad["data"][-1])
+    ax.scatter(data_dict["xx"], data_dict["data"][-1])
     ax.set_xlabel('x')
     plt.show()
 
 ![Snapshot of the phases](/images/kuramoto.jpg)
 
     # Obtain the fraction of spatially coherent oscillators
-    g_zero = spatial(Ad["data"], boundaries='periodic', phases=True)
+    g_zero = spatial(data_dict["data"], boundaries='periodic', phases=True)
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    ax.plot(Ad["t_eval"], g_zero)
+    ax.plot(data_dict["t_eval"], g_zero)
     ax.set_xlabel('t')
     ax.set_ylim((0, 1.0))
     plt.show()
@@ -96,7 +96,7 @@ that we have the phases of this chimera state in a numpy matrix A.
 ![Fraction of spatially coherent oscillators](/images/kuramoto_g0.jpg)
 
     # Obtain the fraction of temporarily correlated oscillators
-    temporal_coherence = temporal(Ad["data"], phases=True)
+    temporal_coherence = temporal(data_dict["data"], phases=True)
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
