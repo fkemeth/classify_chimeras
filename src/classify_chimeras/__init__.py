@@ -35,7 +35,8 @@ import sys
 from time import time
 import numpy as np
 
-from utils import transform_phases, calculate_curvature, calculate_maximal_curvature
+from classify_chimeras.utils import transform_phases, calculate_curvature, \
+    calculate_maximal_curvature
 
 
 def spatial(data: np.ndarray,
