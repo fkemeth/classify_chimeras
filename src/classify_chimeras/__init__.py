@@ -31,127 +31,154 @@ For temporal correlation, use correlation coefficients.
 #                                                                             #
 ###############################################################################
 
-import numpy as np
-from time import time
 import sys
+from time import time
+import numpy as np
 
 
-def spatial(A, boundaries="no-flux", phases=False, nbins=100):
-    """Classify systems with spatial extension using the discrete Laplacian."""
-    print(spatial.__doc__)
-    if np.size(A.shape) == 2:
+def spatial(data: np.ndarray,
+            boundaries: str = "no-flux",
+            phases: bool = False,
+            nbins: int = 100) -> np.ndarray:
+    """
+    Classify systems with spatial extension using the discrete Laplacian.
+
+    :param data: numpy array containing the data with shape TxN or TxN1xN2
+    :param boundaries: boundary conditions, either periodic or no-flux
+    :param phases: if the data consist of phases
+    :param nbins: number of bins in the histogram
+    :returns: numpy array with histogram data
+    """
+    assert len(data.shape) in [2, 3], "Please pass a TxN or TxN1xN2 numpy matrix."
+    assert boundaries in ["no-flux", "periodic"], \
+        "Please select proper boundary conditions: no-flux or periodic."
+
+    if np.size(data.shape) == 2:
         from . import stencil_1d as stl
 
-        (T, N) = A.shape
-        stencil = stl.create_stencil(N)
+        (num_time_steps, num_grid_points) = data.shape
+        stencil = stl.create_stencil(num_grid_points)
         dim = 1
-    elif np.size(A.shape) == 3:
+    else:
         from . import stencil_2d as stl
 
-        (T, N1, N2) = A.shape
-        A = np.reshape(A, (T, N1 * N2))
-        stencil = stl.create_stencil(N1, N2, 1)
+        (num_time_steps, num_grid_points_x, num_grid_points_y) = data.shape
+        data = np.reshape(data, (num_time_steps, num_grid_points_x * num_grid_points_y))
+        stencil = stl.create_stencil(num_grid_points_x, num_grid_points_y, 1)
         dim = 2
-    else:
-        raise ValueError("Data matrix should either be TxN or TxN1xN2!")
     # If A contains only phases, map it onto the complex plane.
     if phases is True:
-        A = np.exp(1.0j * A)
+        data = np.exp(1.0j * data)
     # Create matrix with local curvatures
-    AS = np.zeros_like(A, dtype="complex")
-    for x in range(0, T):
-        AS[x, :] = stencil.dot(A[x])
-    AS = np.abs(AS)
+    curvature_data = np.zeros_like(data, dtype="complex")
+    for time_step in range(0, num_time_steps):
+        curvature_data[time_step, :] = stencil.dot(data[time_step])
+    curvature_data = np.abs(curvature_data)
     # Get maximal curvature
     if dim == 1:
         if boundaries == "no-flux":
-            Dmax = np.max(AS[:, 1:-1])
+            max_curvature = np.max(curvature_data[:, 1:-1])
         elif boundaries == "periodic":
-            Dmax = np.max(AS)
+            max_curvature = np.max(curvature_data)
         else:
             raise ValueError(
                 "Please select proper boundary conditions: no-flux or periodic."
             )
     if dim == 2:
         if boundaries == "no-flux":
-            Dmax = np.max(np.reshape(AS, (T, N1, N2))[:, 1:-1, 1:-1])
+            max_curvature = np.max(np.reshape(
+                curvature_data,
+                (num_time_steps, num_grid_points_x, num_grid_points_y))[:, 1:-1, 1:-1])
         elif boundaries == "periodic":
-            Dmax = np.max(AS)
+            max_curvature = np.max(curvature_data)
         else:
             raise ValueError(
                 "Please select proper boundary conditions: no-flux or periodic."
             )
     # Check if there is incoherence at all.
-    if Dmax < 1e-9:
+    if max_curvature < 1e-9:
         raise ValueError(
             "Largest curvature smaller than 1e-9. System may just contain coherence."
         )
     # Compute the histograms
-    histdat = np.zeros((T, nbins))
+    histdat = np.zeros((num_time_steps, nbins))
     if dim == 1:
         if boundaries == "no-flux":
-            for x in range(0, T):
-                histdat[x, :] = np.histogram(AS[x, 1:-1], nbins, range=(0, Dmax))[
-                    0
-                ] / float((N - 2))
+            for time_step in range(0, num_time_steps):
+                histdat[time_step, :] = np.histogram(
+                    curvature_data[time_step, 1:-1], nbins,
+                    range=(0, max_curvature))[0] / float((num_grid_points - 2))
         elif boundaries == "periodic":
-            for x in range(0, T):
-                histdat[x, :] = np.histogram(AS[x], nbins, range=(0, Dmax))[0] / float(
-                    (N)
-                )
+            for time_step in range(0, num_time_steps):
+                histdat[time_step, :] = np.histogram(
+                    curvature_data[time_step], nbins,
+                    range=(0, max_curvature))[0] / float((num_grid_points))
         else:
             raise ValueError(
                 "Please select proper boundary conditions: no-flux or periodic."
             )
     if dim == 2:
         if boundaries == "no-flux":
-            AS = np.reshape(AS, (T, N1, N2))
-            for x in range(0, T):
-                histdat[x, :] = np.histogram(AS[x, 1:-1, 1:-1], nbins, range=(0, Dmax))[
-                    0
-                ] / float((N1 - 2) * (N2 - 2))
+            curvature_data = np.reshape(
+                curvature_data,
+                (num_time_steps, num_grid_points_x, num_grid_points_y))
+            for time_step in range(0, num_time_steps):
+                histdat[time_step, :] = np.histogram(
+                    curvature_data[time_step, 1:-1, 1:-1], nbins,
+                    range=(0, max_curvature))[0] / float(
+                        (num_grid_points_x - 2) * (num_grid_points_y - 2))
         elif boundaries == "periodic":
-            for x in range(0, T):
-                histdat[x, :] = np.histogram(AS[x], nbins, range=(0, Dmax))[0] / float(
-                    (N1 * N2)
-                )
+            for time_step in range(0, num_time_steps):
+                histdat[time_step, :] = np.histogram(
+                    curvature_data[time_step], nbins,
+                    range=(0, max_curvature))[0] / float(
+                        (num_grid_points_x * num_grid_points_y))
         else:
             raise ValueError(
-                "Please select proper boundary conditions: no-flux or periodic."
-            )
+                "Please select proper boundary conditions: no-flux or periodic.")
     print("\nDone!")
     return histdat[:, 0]
 
 
-def globaldist(A, nbins=100, phases=False, Ncoarse=1500):
-    """Classify coherence without a spatial extension using pairwise distances."""
-    print(globaldist.__doc__)
+def globaldist(data: np.ndarray,
+               nbins: int = 100,
+               phases: bool = False,
+               num_coarse: int = 1500) -> np.ndarray:
+    """
+    Classify coherence without a spatial extension using pairwise distances.
+
+    :param data: numpy array containing the data with shape TxN or TxN1xN2
+    :param nbins: number of bins in the histogram
+    :param phases: if the data consist of phases
+    :param num_coarse: maximum number of oscillators to consider
+    :returns: numpy array with histogram data
+    """
     tstart = time()
-    try:
-        (T, N) = A.shape
-    except:
-        raise ValueError("Please pass a TxN numpy matrix.")
-    while N > Ncoarse:
+    assert len(data.shape) == 2, "Please pass a TxN numpy matrix."
+
+    (num_time_steps, num_grid_points) = data.shape
+    while num_grid_points > num_coarse:
         print("Too many oscillatrs (N>1000). Coarse grained data is used.")
-        A = A[:, ::2]
-        (T, N) = A.shape
+        data = data[:, ::2]
+        (num_time_steps, num_grid_points) = data.shape
     if phases is True:
-        A = np.exp(1.0j * A)
+        data = np.exp(1.0j * data)
 
     # Get maximal distance
     print("Computing the maximal distance. This may take a few seconds.")
-    Dmax = 0.0
-    for x in range(0, T):
-        m, n = np.meshgrid(A[x, :], A[x, :])
+    max_curvature = 0.0
+    for time_step in range(0, num_time_steps):
+        mesh_x, mesh_y = np.meshgrid(data[time_step, :], data[time_step, :])
         # get the distance via the norm
-        out = abs(m - n)
+        out = abs(mesh_x - mesh_y)
         out = np.delete(out, np.diag_indices_from(out))
-        if np.max(out) > Dmax:
-            Dmax = np.max(out)
-        if (x) % (np.floor((T) / 100)) == 0:
+        if np.max(out) > max_curvature:
+            max_curvature = np.max(out)
+        if (time_step) % (np.floor((num_time_steps) / 100)) == 0:
             sys.stdout.write(
                 "\r %9.1f"
-                % round((time() - tstart) / (float(x + 1)) * (float(T) - float(x)), 1)
+                % round((time() - tstart) / (float(time_step + 1)) * (
+                    float(num_time_steps) - float(time_step)), 1)
                 + " seconds left"
             )
             sys.stdout.flush()
@@ -160,20 +187,21 @@ def globaldist(A, nbins=100, phases=False, Ncoarse=1500):
     # Compute the histograms
     tstart = time()
     print("Computing histograms. This may take a few seconds.")
-    histdat = np.zeros((T, nbins))
-    for x in range(0, T):
-        m, n = np.meshgrid(A[x, :], A[x, :])
+    histdat = np.zeros((num_time_steps, nbins))
+    for time_step in range(0, num_time_steps):
+        mesh_x, mesh_y = np.meshgrid(data[time_step, :], data[time_step, :])
         # get the distance via the norm
-        out = abs(m - n)
+        out = abs(mesh_x - mesh_y)
         # Remove diagonal entries
         out = np.delete(out, np.diag_indices_from(out))
-        histdat[x, :] = np.histogram(out, nbins, range=(0, Dmax))[0] / float(
-            N * (N - 1)
-        )
-        if (x) % (np.floor((T) / 100)) == 0:
+        histdat[time_step, :] = np.histogram(
+            out, nbins, range=(0, max_curvature))[0] / float(
+                num_grid_points * (num_grid_points - 1))
+        if (time_step) % (np.floor((num_time_steps) / 100)) == 0:
             sys.stdout.write(
                 "\r %9.1f"
-                % round((time() - tstart) / (float(x + 1)) * (float(T) - float(x)), 1)
+                % round((time() - tstart) / (float(time_step + 1)) * (
+                    float(num_time_steps) - float(time_step)), 1)
                 + " seconds left"
             )
             sys.stdout.flush()
@@ -181,53 +209,66 @@ def globaldist(A, nbins=100, phases=False, Ncoarse=1500):
     return np.sqrt(histdat[:, 0])
 
 
-def temporal(A, nbins=100, phases=False, Ncoarse=1500):
-    """Calculate temporal correlation coefficients."""
+def temporal(data: np.ndarray,
+             nbins: int = 100,
+             phases: bool = False,
+             num_coarse: int = 1500) -> np.ndarray:
+    """
+    Calculate temporal correlation coefficients.
+
+    :param data: numpy array containing the data with shape TxN or TxN1xN2
+    :param nbins: number of bins in the histogram
+    :param phases: if the data consist of phases
+    :param num_coarse: maximum number of oscillators to consider
+    :returns: numpy array with histogram data
+    """
     print(temporal.__doc__)
     tstart = time()
-    try:
-        Ashape = len(A.shape)
-        if Ashape == 2:
-            (T, N) = A.shape
-        elif Ashape == 3:
-            (T, N1, N2) = A.shape
-            A = np.reshape(A, (T, N1 * N2))
-            N = N1 * N2
-        else:
-            raise ValueError("Please pass a TxN or TxN1xN2 numpy matrix.")
-    except:
-        raise ValueError("Please pass a TxN or TxN1xN2 numpy matrix.")
-    while N > Ncoarse:
+
+    assert len(data.shape) in [2, 3], "Please pass a TxN or TxN1xN2 numpy matrix."
+
+    if len(data.shape) == 2:
+        (num_time_steps, num_grid_points) = data.shape
+    elif len(data.shape) == 3:
+        (num_time_steps, num_grid_points_x, num_grid_points_y) = data.shape
+        data = np.reshape(data, (num_time_steps, num_grid_points_x * num_grid_points_y))
+        num_grid_points = num_grid_points_x * num_grid_points_y
+
+    while num_grid_points > num_coarse:
         print("Too many oscillators (N>1500). Taking half the data.")
-        A = A[:, ::2]
-        (T, N) = A.shape
+        data = data[:, ::2]
+        (num_time_steps, num_grid_points) = data.shape
     if phases:
-        A = np.exp(1.0j * A)
-    vacoma = np.zeros(int(N * (N - 1) / 2), dtype="complex")
+        data = np.exp(1.0j * data)
+    vacoma = np.zeros(int(num_grid_points * (num_grid_points - 1) / 2), dtype="complex")
     idx = 0
     print(
         "Calculating all pairwise correlation coefficients. This may take a few seconds."
     )
-    for x in range(N - 1):
-        for y in range(x + 1, N):
+    for x_position in range(num_grid_points - 1):
+        for y_position in range(x_position + 1, num_grid_points):
             vacoma[idx] = np.mean(
-                np.conjugate(A[:, x] - np.mean(A[:, x])) * (A[:, y] - np.mean(A[:, y]))
-            ) / (np.std(np.conjugate(A[:, x])) * np.std(A[:, y]))
+                np.conjugate(
+                    data[:, x_position] - np.mean(data[:, x_position])) * (
+                        data[:, y_position] - np.mean(data[:, y_position]))) / (
+                            np.std(
+                                np.conjugate(
+                                    data[:, x_position])) * np.std(data[:, y_position]))
             idx += 1
-            if (idx) % (np.floor((N * (N - 1) / 2) / 100)) == 0:
+            if (idx) % (
+                    np.floor((num_grid_points * (num_grid_points - 1) / 2) / 100)) == 0:
                 sys.stdout.write(
                     "\r %9.1f"
                     % round(
-                        (time() - tstart)
-                        / (float(idx))
-                        * (float(N * (N - 1) / 2) - float(idx)),
+                        (time() - tstart) / (float(idx)) * (float(
+                            num_grid_points * (num_grid_points - 1) / 2) - float(idx)),
                         1,
                     )
                     + " seconds left"
                 )
                 sys.stdout.flush()
     histdat = np.histogram(np.abs(vacoma), bins=nbins, range=(0.0, 1.01))[0] / float(
-        N * (N - 1) / 2
+        num_grid_points * (num_grid_points - 1) / 2
     )
     print("\nDone!")
     return histdat
