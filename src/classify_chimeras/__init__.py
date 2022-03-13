@@ -35,6 +35,8 @@ import sys
 from time import time
 import numpy as np
 
+from utils import transform_phases, calculate_curvature, calculate_maximal_curvature
+
 
 def spatial(data: np.ndarray,
             boundaries: str = "no-flux",
@@ -53,48 +55,21 @@ def spatial(data: np.ndarray,
     assert boundaries in ["no-flux", "periodic"], \
         "Please select proper boundary conditions: no-flux or periodic."
 
-    if np.size(data.shape) == 2:
-        from . import stencil_1d as stl
-
+    if len(data.shape) == 2:
         (num_time_steps, num_grid_points) = data.shape
-        stencil = stl.create_stencil(num_grid_points)
-        dim = 1
     else:
-        from . import stencil_2d as stl
-
         (num_time_steps, num_grid_points_x, num_grid_points_y) = data.shape
-        data = np.reshape(data, (num_time_steps, num_grid_points_x * num_grid_points_y))
-        stencil = stl.create_stencil(num_grid_points_x, num_grid_points_y, 1)
-        dim = 2
+
     # If A contains only phases, map it onto the complex plane.
     if phases is True:
-        data = np.exp(1.0j * data)
+        data = transform_phases(data)
+
     # Create matrix with local curvatures
-    curvature_data = np.zeros_like(data, dtype="complex")
-    for time_step in range(0, num_time_steps):
-        curvature_data[time_step, :] = stencil.dot(data[time_step])
-    curvature_data = np.abs(curvature_data)
+    curvature_data = calculate_curvature(data)
+
     # Get maximal curvature
-    if dim == 1:
-        if boundaries == "no-flux":
-            max_curvature = np.max(curvature_data[:, 1:-1])
-        elif boundaries == "periodic":
-            max_curvature = np.max(curvature_data)
-        else:
-            raise ValueError(
-                "Please select proper boundary conditions: no-flux or periodic."
-            )
-    if dim == 2:
-        if boundaries == "no-flux":
-            max_curvature = np.max(np.reshape(
-                curvature_data,
-                (num_time_steps, num_grid_points_x, num_grid_points_y))[:, 1:-1, 1:-1])
-        elif boundaries == "periodic":
-            max_curvature = np.max(curvature_data)
-        else:
-            raise ValueError(
-                "Please select proper boundary conditions: no-flux or periodic."
-            )
+    max_curvature = calculate_maximal_curvature(curvature_data, data.shape, boundaries)
+
     # Check if there is incoherence at all.
     if max_curvature < 1e-9:
         raise ValueError(
@@ -102,7 +77,7 @@ def spatial(data: np.ndarray,
         )
     # Compute the histograms
     histdat = np.zeros((num_time_steps, nbins))
-    if dim == 1:
+    if len(data.shape) == 2:
         if boundaries == "no-flux":
             for time_step in range(0, num_time_steps):
                 histdat[time_step, :] = np.histogram(
@@ -117,7 +92,7 @@ def spatial(data: np.ndarray,
             raise ValueError(
                 "Please select proper boundary conditions: no-flux or periodic."
             )
-    if dim == 2:
+    if len(data.shape) == 3:
         if boundaries == "no-flux":
             curvature_data = np.reshape(
                 curvature_data,
@@ -162,7 +137,7 @@ def globaldist(data: np.ndarray,
         data = data[:, ::2]
         (num_time_steps, num_grid_points) = data.shape
     if phases is True:
-        data = np.exp(1.0j * data)
+        data = transform_phases(data)
 
     # Get maximal distance
     print("Computing the maximal distance. This may take a few seconds.")
@@ -239,7 +214,7 @@ def temporal(data: np.ndarray,
         data = data[:, ::2]
         (num_time_steps, num_grid_points) = data.shape
     if phases:
-        data = np.exp(1.0j * data)
+        data = transform_phases(data)
     vacoma = np.zeros(int(num_grid_points * (num_grid_points - 1) / 2), dtype="complex")
     idx = 0
     print(
