@@ -35,8 +35,8 @@ import sys
 from time import time
 import numpy as np
 
-from classify_chimeras.utils import transform_phases, calculate_curvature, \
-    calculate_maximal_curvature
+from classify_chimeras.utils import transform_phases, compute_curvature, \
+    compute_maximal_curvature, compute_normalized_curvature_histogram
 
 
 def spatial(data: np.ndarray,
@@ -56,64 +56,30 @@ def spatial(data: np.ndarray,
     assert boundaries in ["no-flux", "periodic"], \
         "Please select proper boundary conditions: no-flux or periodic."
 
-    if len(data.shape) == 2:
-        (num_time_steps, num_grid_points) = data.shape
-    else:
-        (num_time_steps, num_grid_points_x, num_grid_points_y) = data.shape
-
     # If A contains only phases, map it onto the complex plane.
     if phases is True:
         data = transform_phases(data)
 
     # Create matrix with local curvatures
-    curvature_data = calculate_curvature(data)
+    curvature_data = compute_curvature(data)
 
     # Get maximal curvature
-    max_curvature = calculate_maximal_curvature(curvature_data, data.shape, boundaries)
+    max_curvature = compute_maximal_curvature(curvature_data, boundaries)
 
     # Check if there is incoherence at all.
     if max_curvature < 1e-9:
         raise ValueError(
             "Largest curvature smaller than 1e-9. System may just contain coherence."
         )
-    # Compute the histograms
-    histdat = np.zeros((num_time_steps, nbins))
-    if len(data.shape) == 2:
-        if boundaries == "no-flux":
-            for time_step in range(0, num_time_steps):
-                histdat[time_step, :] = np.histogram(
-                    curvature_data[time_step, 1:-1], nbins,
-                    range=(0, max_curvature))[0] / float((num_grid_points - 2))
-        elif boundaries == "periodic":
-            for time_step in range(0, num_time_steps):
-                histdat[time_step, :] = np.histogram(
-                    curvature_data[time_step], nbins,
-                    range=(0, max_curvature))[0] / float((num_grid_points))
-        else:
-            raise ValueError(
-                "Please select proper boundary conditions: no-flux or periodic."
-            )
-    if len(data.shape) == 3:
-        if boundaries == "no-flux":
-            curvature_data = np.reshape(
-                curvature_data,
-                (num_time_steps, num_grid_points_x, num_grid_points_y))
-            for time_step in range(0, num_time_steps):
-                histdat[time_step, :] = np.histogram(
-                    curvature_data[time_step, 1:-1, 1:-1], nbins,
-                    range=(0, max_curvature))[0] / float(
-                        (num_grid_points_x - 2) * (num_grid_points_y - 2))
-        elif boundaries == "periodic":
-            for time_step in range(0, num_time_steps):
-                histdat[time_step, :] = np.histogram(
-                    curvature_data[time_step], nbins,
-                    range=(0, max_curvature))[0] / float(
-                        (num_grid_points_x * num_grid_points_y))
-        else:
-            raise ValueError(
-                "Please select proper boundary conditions: no-flux or periodic.")
-    print("\nDone!")
-    return histdat[:, 0]
+
+    # Compute the normalized histogram
+    histogram = compute_normalized_curvature_histogram(curvature_data,
+                                                       max_curvature,
+                                                       nbins,
+                                                       boundaries)
+
+    # Return first bin of the normalized histogram
+    return histogram[:, 0]
 
 
 def globaldist(data: np.ndarray,

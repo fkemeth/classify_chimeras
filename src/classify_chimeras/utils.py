@@ -63,7 +63,7 @@ def create_stencil(shape: list) -> csr_matrix:
     return stencil
 
 
-def calculate_curvature(data: np.ndarray) -> np.ndarray:
+def compute_curvature(data: np.ndarray) -> np.ndarray:
     """
     Calculate absolute curvature at each point in space.
 
@@ -73,25 +73,23 @@ def calculate_curvature(data: np.ndarray) -> np.ndarray:
     """
     stencil = create_stencil(data.shape)
 
-    if len(data.shape) == 3:
-        data = np.reshape(data, (data.shape[0], data.shape[1]*data.shape[2]))
-
-    curvature_data = np.zeros_like(data, dtype="complex")
+    curvature_data = np.zeros_like(data.reshape((data.shape[0], -1)), dtype="complex")
     for time_step in range(0, data.shape[0]):
-        curvature_data[time_step, :] = stencil.dot(data[time_step])
+        curvature_data[time_step, :] = stencil.dot(data[time_step].flatten())
+
+    curvature_data = curvature_data.reshape(data.shape)
     return np.abs(curvature_data)
 
 
-def calculate_maximal_curvature(curvature_data: np.ndarray, shape: list, boundaries: str):
+def compute_maximal_curvature(curvature_data: np.ndarray, boundaries: str):
     """
     Calculate maximal absolute curvature.
 
     :param curvature_data: array containing the curvature data
-    :param shape: dimension of original data
     :param boundaries: boundary conditions
     :returns: maximal curvature
     """
-    if len(shape) == 2:
+    if len(curvature_data.shape) == 2:
         if boundaries == "no-flux":
             max_curvature = np.max(curvature_data[:, 1:-1])
         elif boundaries == "periodic":
@@ -100,12 +98,9 @@ def calculate_maximal_curvature(curvature_data: np.ndarray, shape: list, boundar
             raise ValueError(
                 "Please select proper boundary conditions: no-flux or periodic."
             )
-    if len(shape) == 3:
-        (num_time_steps, num_grid_points_x, num_grid_points_y) = shape
+    if len(curvature_data.shape) == 3:
         if boundaries == "no-flux":
-            max_curvature = np.max(np.reshape(
-                curvature_data,
-                (num_time_steps, num_grid_points_x, num_grid_points_y))[:, 1:-1, 1:-1])
+            max_curvature = np.max(curvature_data[:, 1:-1, 1:-1])
         elif boundaries == "periodic":
             max_curvature = np.max(curvature_data)
         else:
@@ -113,3 +108,57 @@ def calculate_maximal_curvature(curvature_data: np.ndarray, shape: list, boundar
                 "Please select proper boundary conditions: no-flux or periodic."
             )
     return max_curvature
+
+
+def compute_normalized_curvature_histogram(curvature_data: np.ndarray,
+                                           max_curvature: float,
+                                           nbins: int,
+                                           boundaries: str) -> np.ndarray:
+    """
+    Compute histogram of curvature data.
+
+    :param curvature_data: array containing the curvature data
+    :param max_curvature: maximum curvature
+    :param nbins: number of histogram bins
+    :param boundaries: boundary conditions
+    :returns: normalized histogram of curvature data
+    """
+    num_time_steps = curvature_data.shape[0]
+
+    histdat = np.zeros((num_time_steps, nbins))
+    if len(curvature_data.shape) == 2:
+        num_grid_points = curvature_data.shape[1]
+        if boundaries == "no-flux":
+            for time_step in range(0, num_time_steps):
+                histdat[time_step, :] = np.histogram(
+                    curvature_data[time_step, 1:-1], nbins,
+                    range=(0, max_curvature))[0]
+            normalization = float((num_grid_points - 2))
+        elif boundaries == "periodic":
+            for time_step in range(0, num_time_steps):
+                histdat[time_step, :] = np.histogram(
+                    curvature_data[time_step], nbins,
+                    range=(0, max_curvature))[0]
+            normalization = float((num_grid_points))
+        else:
+            raise ValueError(
+                "Please select proper boundary conditions: no-flux or periodic."
+            )
+    if len(curvature_data.shape) == 3:
+        (_, num_grid_points_x, num_grid_points_y) = curvature_data
+        if boundaries == "no-flux":
+            for time_step in range(0, num_time_steps):
+                histdat[time_step, :] = np.histogram(
+                    curvature_data[time_step, 1:-1, 1:-1], nbins,
+                    range=(0, max_curvature))[0]
+            normalization = float((num_grid_points_x - 2) * (num_grid_points_y - 2))
+        elif boundaries == "periodic":
+            for time_step in range(0, num_time_steps):
+                histdat[time_step, :] = np.histogram(
+                    curvature_data[time_step], nbins,
+                    range=(0, max_curvature))[0]
+            normalization = float((num_grid_points_x * num_grid_points_y))
+        else:
+            raise ValueError(
+                "Please select proper boundary conditions: no-flux or periodic.")
+    return histdat/normalization
