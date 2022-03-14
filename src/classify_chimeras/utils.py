@@ -33,6 +33,9 @@ For temporal correlation, use correlation coefficients.
 
 import numpy as np
 from scipy.sparse import csr_matrix
+from scipy.spatial.distance import pdist, squareform
+
+from tqdm.auto import tqdm
 
 from classify_chimeras import stencil_1d, stencil_2d
 
@@ -110,18 +113,18 @@ def compute_maximal_curvature(curvature_data: np.ndarray, boundaries: str):
     return max_curvature
 
 
-def compute_normalized_curvature_histogram(curvature_data: np.ndarray,
-                                           max_curvature: float,
-                                           nbins: int,
-                                           boundaries: str) -> np.ndarray:
+def compute_normalized_curvature_histograms(curvature_data: np.ndarray,
+                                            max_curvature: float,
+                                            nbins: int,
+                                            boundaries: str) -> np.ndarray:
     """
-    Compute histogram of curvature data.
+    Compute histograms of curvature data.
 
     :param curvature_data: array containing the curvature data
     :param max_curvature: maximum curvature
     :param nbins: number of histogram bins
     :param boundaries: boundary conditions
-    :returns: normalized histogram of curvature data
+    :returns: normalized histograms of curvature data
     """
     num_time_steps = curvature_data.shape[0]
 
@@ -161,4 +164,52 @@ def compute_normalized_curvature_histogram(curvature_data: np.ndarray,
         else:
             raise ValueError(
                 "Please select proper boundary conditions: no-flux or periodic.")
+    return histdat/normalization
+
+
+def coarse_grain_data(data: np.ndarray, num_coarse: int = 1500) -> np.ndarray:
+    """
+    Downsample data.
+
+    :param data: numpy array containing the data with shape TxN or TxN1xN2
+    :param num_coarse: maximum number of oscillators to consider
+    :returns: numpy array with downsampled data
+    """
+    (_, num_grid_points) = data.shape
+    while num_grid_points > num_coarse:
+        print("Too many oscillatrs (N>1000). Coarse grained data is used.")
+        data = data[:, ::2]
+    return data
+
+
+def compute_distances(data: np.ndarray) -> np.ndarray:
+    """
+    Compute cityblock distance between entry of data matrix.
+
+    :param data: numpy array containing the data
+    :returns: numpy array containing distance values
+    """
+    return squareform(pdist(data[:, np.newaxis], metric='cityblock'))
+
+
+def compute_normalized_distance_histograms(data: np.ndarray,
+                                           max_distance: float,
+                                           nbins: int) -> np.ndarray:
+    """
+    Compute histograms of distance data.
+
+    :param data: array containing the data
+    :param max_distance: maximum distance
+    :param nbins: number of histogram bins
+    :returns: normalized histograms of distance data
+    """
+    num_time_steps, num_grid_points = data.shape
+
+    histdat = np.zeros((num_time_steps, nbins))
+    for time_step in tqdm(range(num_time_steps)):
+        distances = compute_distances(data[time_step])
+        histdat[time_step, :] = np.histogram(
+            distances, nbins, range=(0, max_distance))[0]
+
+    normalization = float(num_grid_points * (num_grid_points - 1))
     return histdat/normalization

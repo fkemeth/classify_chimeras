@@ -35,8 +35,11 @@ import sys
 from time import time
 import numpy as np
 
+from tqdm.auto import tqdm
+
 from classify_chimeras.utils import transform_phases, compute_curvature, \
-    compute_maximal_curvature, compute_normalized_curvature_histogram
+    compute_maximal_curvature, compute_normalized_curvature_histograms, \
+    coarse_grain_data, compute_distances, compute_normalized_distance_histograms
 
 
 def spatial(data: np.ndarray,
@@ -56,6 +59,8 @@ def spatial(data: np.ndarray,
     assert boundaries in ["no-flux", "periodic"], \
         "Please select proper boundary conditions: no-flux or periodic."
 
+    print("Computing spatial coherence measure.")
+
     # If A contains only phases, map it onto the complex plane.
     if phases is True:
         data = transform_phases(data)
@@ -72,14 +77,14 @@ def spatial(data: np.ndarray,
             "Largest curvature smaller than 1e-9. System may just contain coherence."
         )
 
-    # Compute the normalized histogram
-    histogram = compute_normalized_curvature_histogram(curvature_data,
-                                                       max_curvature,
-                                                       nbins,
-                                                       boundaries)
+    # Compute the normalized histograms
+    histograms = compute_normalized_curvature_histograms(curvature_data,
+                                                         max_curvature,
+                                                         nbins,
+                                                         boundaries)
 
-    # Return first bin of the normalized histogram
-    return histogram[:, 0]
+    # Return first bin of the normalized histograms
+    return histograms[:, 0]
 
 
 def globaldist(data: np.ndarray,
@@ -95,60 +100,31 @@ def globaldist(data: np.ndarray,
     :param num_coarse: maximum number of oscillators to consider
     :returns: numpy array with histogram data
     """
-    tstart = time()
     assert len(data.shape) == 2, "Please pass a TxN numpy matrix."
 
-    (num_time_steps, num_grid_points) = data.shape
-    while num_grid_points > num_coarse:
-        print("Too many oscillatrs (N>1000). Coarse grained data is used.")
-        data = data[:, ::2]
-        (num_time_steps, num_grid_points) = data.shape
+    print("Computing spatial coherence measure.")
+
+    if data.shape[1] > num_coarse:
+        data = coarse_grain_data(data, num_coarse)
+
+    # If A contains only phases, map it onto the complex plane.
     if phases is True:
         data = transform_phases(data)
 
+    (num_time_steps, _) = data.shape
+
     # Get maximal distance
     print("Computing the maximal distance. This may take a few seconds.")
-    max_curvature = 0.0
-    for time_step in range(0, num_time_steps):
-        mesh_x, mesh_y = np.meshgrid(data[time_step, :], data[time_step, :])
-        # get the distance via the norm
-        out = abs(mesh_x - mesh_y)
-        out = np.delete(out, np.diag_indices_from(out))
-        if np.max(out) > max_curvature:
-            max_curvature = np.max(out)
-        if (time_step) % (np.floor((num_time_steps) / 100)) == 0:
-            sys.stdout.write(
-                "\r %9.1f"
-                % round((time() - tstart) / (float(time_step + 1)) * (
-                    float(num_time_steps) - float(time_step)), 1)
-                + " seconds left"
-            )
-            sys.stdout.flush()
-    print("\n")
+    max_distance = 0.0
+    for time_step in tqdm(range(num_time_steps)):
+        distances = compute_distances(data[time_step])
+        if np.max(distances) > max_distance:
+            max_distance = np.max(distances)
 
     # Compute the histograms
-    tstart = time()
     print("Computing histograms. This may take a few seconds.")
-    histdat = np.zeros((num_time_steps, nbins))
-    for time_step in range(0, num_time_steps):
-        mesh_x, mesh_y = np.meshgrid(data[time_step, :], data[time_step, :])
-        # get the distance via the norm
-        out = abs(mesh_x - mesh_y)
-        # Remove diagonal entries
-        out = np.delete(out, np.diag_indices_from(out))
-        histdat[time_step, :] = np.histogram(
-            out, nbins, range=(0, max_curvature))[0] / float(
-                num_grid_points * (num_grid_points - 1))
-        if (time_step) % (np.floor((num_time_steps) / 100)) == 0:
-            sys.stdout.write(
-                "\r %9.1f"
-                % round((time() - tstart) / (float(time_step + 1)) * (
-                    float(num_time_steps) - float(time_step)), 1)
-                + " seconds left"
-            )
-            sys.stdout.flush()
-    print("\nDone!")
-    return np.sqrt(histdat[:, 0])
+    histograms = compute_normalized_distance_histograms(data, max_distance, nbins)
+    return np.sqrt(histograms[:, 0])
 
 
 def temporal(data: np.ndarray,
@@ -164,7 +140,8 @@ def temporal(data: np.ndarray,
     :param num_coarse: maximum number of oscillators to consider
     :returns: numpy array with histogram data
     """
-    print(temporal.__doc__)
+
+    print("Computing temporal coherence measure.")
     tstart = time()
 
     assert len(data.shape) in [2, 3], "Please pass a TxN or TxN1xN2 numpy matrix."
