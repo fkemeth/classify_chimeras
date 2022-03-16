@@ -102,6 +102,7 @@ def globaldist(data: np.ndarray,
 
     print("Computing spatial coherence measure.")
 
+    # Downsample data if it contains too many grid points
     if data.shape[1] > num_coarse:
         data = coarse_grain_data(data, num_coarse)
 
@@ -137,16 +138,21 @@ def temporal(data: np.ndarray,
 
     assert len(data.shape) in [2, 3], "Please pass a TxN or TxN1xN2 numpy matrix."
 
+    # Flatten data if it has two spatial dimensions
     data = data.reshape((data.shape[0], -1))
 
+    # Downsample data if it contains too many grid points
     if data.shape[1] > num_coarse:
         data = coarse_grain_data(data, num_coarse)
 
+    # If data contains only phases, map it onto the complex plane.
     if phases:
         data = transform_phases(data)
 
+    # Compute all pariwise correlation coefficients
     pairwise_correlations = compute_pairwise_correlation_coefficients(data)
 
+    # Compute normalized histogram of the correlation coefficients
     histogram = compute_normalized_correlation_histogram(pairwise_correlations, nbins)
 
     return histogram
