@@ -38,8 +38,6 @@ import numpy as np
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import pdist
 
-from scipy.stats.stats import pearsonr
-
 from tqdm.auto import tqdm
 
 from classify_chimeras import stencil_1d, stencil_2d
@@ -236,6 +234,22 @@ def compute_normalized_distance_histograms(data: np.ndarray,
     return histdat/normalization
 
 
+def compute_pearson_coefficient(data_x: np.ndarray, data_y: np.ndarray) -> np.ndarray:
+    """
+    Compute the Pearson correlation coefficient for real or complex data.
+
+    :param data_x: real or complex time series
+    :param data_y: real or complex time series
+    :returns: real or complex correlation coefficient between the two time series
+    """
+    assert len(data_x) == len(data_y), "Time series should be of same length."
+
+    coefficient = np.mean(
+        np.conjugate(data_x - np.mean(data_x)) * (data_y - np.mean(data_y))) / (
+            np.std(np.conjugate(data_x)) * np.std(data_y))
+    return coefficient
+
+
 def compute_pairwise_correlation_coefficients(data: np.ndarray) -> np.ndarray:
     """
     Compute all pariwise correlation coefficients.
@@ -253,7 +267,8 @@ def compute_pairwise_correlation_coefficients(data: np.ndarray) -> np.ndarray:
     )
 
     for space_x, space_y in combinations(np.arange(num_grid_points), 2):
-        pairwise_correlations[idx] = pearsonr(data[:, space_x], data[:, space_y])
+        pairwise_correlations[idx] = compute_pearson_coefficient(
+            data[:, space_x], data[:, space_y])
         idx += 1
 
     return pairwise_correlations
@@ -268,6 +283,8 @@ def compute_normalized_correlation_histogram(pairwise_correlations: np.ndarray,
     :param nbins: number of histogram bins
     :returns: histogram of pairwise correlation coefficients
     """
-    histogram = np.histogram(np.abs(pairwise_correlations), bins=nbins, range=(0.0, 1.01),
-                             density=True)[0]
-    return histogram
+    normalization = len(pairwise_correlations)
+    histogram = np.histogram(np.abs(pairwise_correlations),
+                             bins=nbins,
+                             range=(0.0, 1.0))[0]
+    return histogram/normalization
