@@ -135,39 +135,41 @@ def compute_normalized_curvature_histograms(curvature_data: np.ndarray,
 
     histdat = np.zeros((num_time_steps, nbins))
     if len(curvature_data.shape) == 2:
+        num_grid_points = curvature_data.shape[1]
         if boundaries == "no-flux":
             for time_step in range(0, num_time_steps):
                 histdat[time_step, :] = np.histogram(
                     curvature_data[time_step, 1:-1], nbins,
-                    range=(0, max_curvature),
-                    density=True)[0]
+                    range=(0, max_curvature))[0]
+            normalization = float((num_grid_points - 2))
         elif boundaries == "periodic":
             for time_step in range(0, num_time_steps):
                 histdat[time_step, :] = np.histogram(
                     curvature_data[time_step], nbins,
-                    range=(0, max_curvature),
-                    density=True)[0]
+                    range=(0, max_curvature))[0]
+            normalization = float((num_grid_points))
         else:
             raise ValueError(
                 "Please select proper boundary conditions: no-flux or periodic."
             )
     if len(curvature_data.shape) == 3:
+        (_, num_grid_points_x, num_grid_points_y) = curvature_data
         if boundaries == "no-flux":
             for time_step in range(0, num_time_steps):
                 histdat[time_step, :] = np.histogram(
                     curvature_data[time_step, 1:-1, 1:-1], nbins,
-                    range=(0, max_curvature),
-                    density=True)[0]
+                    range=(0, max_curvature))[0]
+            normalization = float((num_grid_points_x - 2) * (num_grid_points_y - 2))
         elif boundaries == "periodic":
             for time_step in range(0, num_time_steps):
                 histdat[time_step, :] = np.histogram(
                     curvature_data[time_step], nbins,
-                    range=(0, max_curvature),
-                    density=True)[0]
+                    range=(0, max_curvature))[0]
+            normalization = float((num_grid_points_x * num_grid_points_y))
         else:
             raise ValueError(
                 "Please select proper boundary conditions: no-flux or periodic.")
-    return histdat
+    return histdat/normalization
 
 
 def coarse_grain_data(data: np.ndarray, num_coarse: int = 1500) -> np.ndarray:
@@ -222,16 +224,16 @@ def compute_normalized_distance_histograms(data: np.ndarray,
     :param nbins: number of histogram bins
     :returns: normalized histograms of distance data
     """
-    (num_time_steps, _) = data.shape
+    num_time_steps, num_grid_points = data.shape
 
     histdat = np.zeros((num_time_steps, nbins))
     for time_step in tqdm(range(num_time_steps)):
         distances = compute_distances(data[time_step])
         histdat[time_step, :] = np.histogram(
-            distances, nbins, range=(0, max_distance),
-            density=True)[0]
+            distances, nbins, range=(0, max_distance))[0]
 
-    return histdat
+    normalization = float(num_grid_points * (num_grid_points - 1)/2)
+    return histdat/normalization
 
 
 def compute_pairwise_correlation_coefficients(data: np.ndarray) -> np.ndarray:
