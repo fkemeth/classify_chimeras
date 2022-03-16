@@ -148,7 +148,7 @@ def compute_normalized_curvature_histograms(
                 'Please select proper boundary conditions: no-flux or periodic.'
             )
     if len(curvature_data.shape) == 3:
-        (_, num_grid_points_x, num_grid_points_y) = curvature_data
+        (_, num_grid_points_x, num_grid_points_y) = curvature_data.shape
         if boundaries == 'no-flux':
             for time_step in range(0, num_time_steps):
                 histdat[time_step, :] = np.histogram(
@@ -178,7 +178,7 @@ def coarse_grain_data(data: np.ndarray, num_coarse: int = 1500) -> np.ndarray:
     :param num_coarse: maximum number of oscillators to consider
     :returns: numpy array with downsampled data
     """
-    return data[:, np.random.choice(np.arange(num_coarse), num_coarse)]
+    return data[:, np.random.choice(np.arange(data.shape[0]), num_coarse)]
 
 
 def compute_distances(data: np.ndarray) -> np.ndarray:
@@ -264,7 +264,7 @@ def compute_pairwise_correlation_coefficients(data: np.ndarray) -> np.ndarray:
         'Calculating all pairwise correlation coefficients. This may take a few seconds.'
     )
 
-    for space_x, space_y in combinations(np.arange(num_grid_points), 2):
+    for space_x, space_y in tqdm(combinations(np.arange(num_grid_points), 2)):
         pairwise_correlations[idx] = compute_pearson_coefficient(
             data[:, space_x], data[:, space_y]
         )
@@ -285,6 +285,6 @@ def compute_normalized_correlation_histogram(
     """
     normalization = len(pairwise_correlations)
     histogram = np.histogram(
-        np.abs(pairwise_correlations), bins=nbins, range=(0.0, 1.0)
+        np.abs(pairwise_correlations), bins=nbins, range=(0.0, 1.0+1e-3)
     )[0]
     return histogram / normalization
