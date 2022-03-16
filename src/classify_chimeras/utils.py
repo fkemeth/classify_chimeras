@@ -34,10 +34,8 @@ For temporal correlation, use correlation coefficients.
 from itertools import combinations
 
 import numpy as np
-
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import pdist
-
 from tqdm.auto import tqdm
 
 from classify_chimeras import stencil_1d, stencil_2d
@@ -79,7 +77,7 @@ def compute_curvature(data: np.ndarray) -> np.ndarray:
     """
     stencil = create_stencil(data.shape)
 
-    curvature_data = np.zeros_like(data.reshape((data.shape[0], -1)), dtype="complex")
+    curvature_data = np.zeros_like(data.reshape((data.shape[0], -1)), dtype='complex')
     for time_step in range(0, data.shape[0]):
         curvature_data[time_step, :] = stencil.dot(data[time_step].flatten())
 
@@ -96,30 +94,29 @@ def compute_maximal_curvature(curvature_data: np.ndarray, boundaries: str):
     :returns: maximal curvature
     """
     if len(curvature_data.shape) == 2:
-        if boundaries == "no-flux":
+        if boundaries == 'no-flux':
             max_curvature = np.max(curvature_data[:, 1:-1])
-        elif boundaries == "periodic":
+        elif boundaries == 'periodic':
             max_curvature = np.max(curvature_data)
         else:
             raise ValueError(
-                "Please select proper boundary conditions: no-flux or periodic."
+                'Please select proper boundary conditions: no-flux or periodic.'
             )
     if len(curvature_data.shape) == 3:
-        if boundaries == "no-flux":
+        if boundaries == 'no-flux':
             max_curvature = np.max(curvature_data[:, 1:-1, 1:-1])
-        elif boundaries == "periodic":
+        elif boundaries == 'periodic':
             max_curvature = np.max(curvature_data)
         else:
             raise ValueError(
-                "Please select proper boundary conditions: no-flux or periodic."
+                'Please select proper boundary conditions: no-flux or periodic.'
             )
     return max_curvature
 
 
-def compute_normalized_curvature_histograms(curvature_data: np.ndarray,
-                                            max_curvature: float,
-                                            nbins: int,
-                                            boundaries: str) -> np.ndarray:
+def compute_normalized_curvature_histograms(
+    curvature_data: np.ndarray, max_curvature: float, nbins: int, boundaries: str
+) -> np.ndarray:
     """
     Compute histograms of curvature data.
 
@@ -134,40 +131,43 @@ def compute_normalized_curvature_histograms(curvature_data: np.ndarray,
     histdat = np.zeros((num_time_steps, nbins))
     if len(curvature_data.shape) == 2:
         num_grid_points = curvature_data.shape[1]
-        if boundaries == "no-flux":
+        if boundaries == 'no-flux':
             for time_step in range(0, num_time_steps):
                 histdat[time_step, :] = np.histogram(
-                    curvature_data[time_step, 1:-1], nbins,
-                    range=(0, max_curvature))[0]
-            normalization = float((num_grid_points - 2))
-        elif boundaries == "periodic":
+                    curvature_data[time_step, 1:-1], nbins, range=(0, max_curvature)
+                )[0]
+            normalization = float(num_grid_points - 2)
+        elif boundaries == 'periodic':
             for time_step in range(0, num_time_steps):
                 histdat[time_step, :] = np.histogram(
-                    curvature_data[time_step], nbins,
-                    range=(0, max_curvature))[0]
-            normalization = float((num_grid_points))
+                    curvature_data[time_step], nbins, range=(0, max_curvature)
+                )[0]
+            normalization = float(num_grid_points)
         else:
             raise ValueError(
-                "Please select proper boundary conditions: no-flux or periodic."
+                'Please select proper boundary conditions: no-flux or periodic.'
             )
     if len(curvature_data.shape) == 3:
         (_, num_grid_points_x, num_grid_points_y) = curvature_data
-        if boundaries == "no-flux":
+        if boundaries == 'no-flux':
             for time_step in range(0, num_time_steps):
                 histdat[time_step, :] = np.histogram(
-                    curvature_data[time_step, 1:-1, 1:-1], nbins,
-                    range=(0, max_curvature))[0]
+                    curvature_data[time_step, 1:-1, 1:-1],
+                    nbins,
+                    range=(0, max_curvature),
+                )[0]
             normalization = float((num_grid_points_x - 2) * (num_grid_points_y - 2))
-        elif boundaries == "periodic":
+        elif boundaries == 'periodic':
             for time_step in range(0, num_time_steps):
                 histdat[time_step, :] = np.histogram(
-                    curvature_data[time_step], nbins,
-                    range=(0, max_curvature))[0]
-            normalization = float((num_grid_points_x * num_grid_points_y))
+                    curvature_data[time_step], nbins, range=(0, max_curvature)
+                )[0]
+            normalization = float(num_grid_points_x * num_grid_points_y)
         else:
             raise ValueError(
-                "Please select proper boundary conditions: no-flux or periodic.")
-    return histdat/normalization
+                'Please select proper boundary conditions: no-flux or periodic.'
+            )
+    return histdat / normalization
 
 
 def coarse_grain_data(data: np.ndarray, num_coarse: int = 1500) -> np.ndarray:
@@ -207,9 +207,9 @@ def compute_maximal_distance(data: np.ndarray) -> float:
     return max_distance
 
 
-def compute_normalized_distance_histograms(data: np.ndarray,
-                                           max_distance: float,
-                                           nbins: int) -> np.ndarray:
+def compute_normalized_distance_histograms(
+    data: np.ndarray, max_distance: float, nbins: int
+) -> np.ndarray:
     """
     Compute histograms of distance data.
 
@@ -223,11 +223,12 @@ def compute_normalized_distance_histograms(data: np.ndarray,
     histdat = np.zeros((num_time_steps, nbins))
     for time_step in tqdm(range(num_time_steps)):
         distances = compute_distances(data[time_step])
-        histdat[time_step, :] = np.histogram(
-            distances, nbins, range=(0, max_distance))[0]
+        histdat[time_step, :] = np.histogram(distances, nbins, range=(0, max_distance))[
+            0
+        ]
 
-    normalization = float(num_grid_points * (num_grid_points - 1)/2)
-    return histdat/normalization
+    normalization = float(num_grid_points * (num_grid_points - 1) / 2)
+    return histdat / normalization
 
 
 def compute_pearson_coefficient(data_x: np.ndarray, data_y: np.ndarray) -> np.ndarray:
@@ -238,11 +239,11 @@ def compute_pearson_coefficient(data_x: np.ndarray, data_y: np.ndarray) -> np.nd
     :param data_y: real or complex time series
     :returns: real or complex correlation coefficient between the two time series
     """
-    assert len(data_x) == len(data_y), "Time series should be of same length."
+    assert len(data_x) == len(data_y), 'Time series should be of same length.'
 
     coefficient = np.mean(
-        np.conjugate(data_x - np.mean(data_x)) * (data_y - np.mean(data_y))) / (
-            np.std(np.conjugate(data_x)) * np.std(data_y))
+        np.conjugate(data_x - np.mean(data_x)) * (data_y - np.mean(data_y))
+    ) / (np.std(np.conjugate(data_x)) * np.std(data_y))
     return coefficient
 
 
@@ -256,22 +257,25 @@ def compute_pairwise_correlation_coefficients(data: np.ndarray) -> np.ndarray:
     (_, num_grid_points) = data.shape
 
     pairwise_correlations = np.zeros(
-        int(num_grid_points * (num_grid_points - 1) / 2), dtype="complex")
+        int(num_grid_points * (num_grid_points - 1) / 2), dtype='complex'
+    )
     idx = 0
     print(
-        "Calculating all pairwise correlation coefficients. This may take a few seconds."
+        'Calculating all pairwise correlation coefficients. This may take a few seconds.'
     )
 
     for space_x, space_y in combinations(np.arange(num_grid_points), 2):
         pairwise_correlations[idx] = compute_pearson_coefficient(
-            data[:, space_x], data[:, space_y])
+            data[:, space_x], data[:, space_y]
+        )
         idx += 1
 
     return pairwise_correlations
 
 
-def compute_normalized_correlation_histogram(pairwise_correlations: np.ndarray,
-                                             nbins: int) -> np.ndarray:
+def compute_normalized_correlation_histogram(
+    pairwise_correlations: np.ndarray, nbins: int
+) -> np.ndarray:
     """
     Compute histogram of all pariwise correlation coefficients.
 
@@ -280,7 +284,7 @@ def compute_normalized_correlation_histogram(pairwise_correlations: np.ndarray,
     :returns: histogram of pairwise correlation coefficients
     """
     normalization = len(pairwise_correlations)
-    histogram = np.histogram(np.abs(pairwise_correlations),
-                             bins=nbins,
-                             range=(0.0, 1.0))[0]
-    return histogram/normalization
+    histogram = np.histogram(
+        np.abs(pairwise_correlations), bins=nbins, range=(0.0, 1.0)
+    )[0]
+    return histogram / normalization

@@ -32,8 +32,8 @@ For temporal correlation, use correlation coefficients.
 ###############################################################################
 
 import matplotlib.pyplot as plt
-
 from kuramoto_chimera import integrate
+
 from classify_chimeras import spatial, temporal
 
 
@@ -46,23 +46,23 @@ def kuramoto_example() -> None:
 
     fig = plt.figure()
     axes = fig.add_subplot(111)
-    axes.scatter(data_dict["xx"], data_dict["data"][-1])
+    axes.scatter(data_dict['xx'], data_dict['data'][-1])
     axes.set_xlabel('x')
     plt.show()
 
     # Calculate g0
-    g_zero = spatial(data_dict["data"], boundaries='periodic', phases=True)
+    g_zero = spatial(data_dict['data'], boundaries='periodic', phases=True)
 
     # Obtain the fraction of spatially coherent oscillators
     fig = plt.figure()
     axes = fig.add_subplot(111)
-    axes.plot(data_dict["t_eval"], g_zero)
+    axes.plot(data_dict['t_eval'], g_zero)
     axes.set_xlabel('t')
     axes.set_ylim((0, 1.0))
     plt.show()
 
     # Obtain the fraction of temporarily correlated oscillators
-    temporal_coherence = temporal(data_dict["data"], phases=True)
+    temporal_coherence = temporal(data_dict['data'], phases=True)
 
     fig = plt.figure()
     axes = fig.add_subplot(111)
@@ -71,5 +71,5 @@ def kuramoto_example() -> None:
     plt.show()
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     kuramoto_example()

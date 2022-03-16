@@ -33,17 +33,22 @@ For temporal correlation, use correlation coefficients.
 
 import numpy as np
 
-from classify_chimeras.utils import transform_phases, compute_curvature, \
-    compute_maximal_curvature, compute_normalized_curvature_histograms, \
-    coarse_grain_data, compute_normalized_distance_histograms, \
-    compute_maximal_distance, compute_pairwise_correlation_coefficients, \
-    compute_normalized_correlation_histogram
+from classify_chimeras.utils import (coarse_grain_data, compute_curvature,
+                                     compute_maximal_curvature,
+                                     compute_maximal_distance,
+                                     compute_normalized_correlation_histogram,
+                                     compute_normalized_curvature_histograms,
+                                     compute_normalized_distance_histograms,
+                                     compute_pairwise_correlation_coefficients,
+                                     transform_phases)
 
 
-def spatial(data: np.ndarray,
-            boundaries: str = "no-flux",
-            phases: bool = False,
-            nbins: int = 100) -> np.ndarray:
+def spatial(
+    data: np.ndarray,
+    boundaries: str = 'no-flux',
+    phases: bool = False,
+    nbins: int = 100,
+) -> np.ndarray:
     """
     Classify systems with spatial extension using the discrete Laplacian.
 
@@ -53,11 +58,13 @@ def spatial(data: np.ndarray,
     :param nbins: number of bins in the histogram
     :returns: numpy array with histogram data
     """
-    assert len(data.shape) in [2, 3], "Please pass a TxN or TxN1xN2 numpy matrix."
-    assert boundaries in ["no-flux", "periodic"], \
-        "Please select proper boundary conditions: no-flux or periodic."
+    assert len(data.shape) in [2, 3], 'Please pass a TxN or TxN1xN2 numpy matrix.'
+    assert boundaries in [
+        'no-flux',
+        'periodic',
+    ], 'Please select proper boundary conditions: no-flux or periodic.'
 
-    print("Computing spatial coherence measure.")
+    print('Computing spatial coherence measure.')
 
     # If data contains only phases, map it onto the complex plane.
     if phases is True:
@@ -72,23 +79,21 @@ def spatial(data: np.ndarray,
     # Check if there is incoherence at all.
     if max_curvature < 1e-9:
         raise ValueError(
-            "Largest curvature smaller than 1e-9. System may just contain coherence."
+            'Largest curvature smaller than 1e-9. System may just contain coherence.'
         )
 
     # Compute the normalized histograms
-    histograms = compute_normalized_curvature_histograms(curvature_data,
-                                                         max_curvature,
-                                                         nbins,
-                                                         boundaries)
+    histograms = compute_normalized_curvature_histograms(
+        curvature_data, max_curvature, nbins, boundaries
+    )
 
     # Return first bin of the normalized histograms
     return histograms[:, 0]
 
 
-def globaldist(data: np.ndarray,
-               nbins: int = 100,
-               phases: bool = False,
-               num_coarse: int = 1500) -> np.ndarray:
+def globaldist(
+    data: np.ndarray, nbins: int = 100, phases: bool = False, num_coarse: int = 1500
+) -> np.ndarray:
     """
     Classify coherence without a spatial extension using pairwise distances.
 
@@ -98,14 +103,16 @@ def globaldist(data: np.ndarray,
     :param num_coarse: maximum number of oscillators to consider
     :returns: numpy array with histogram data
     """
-    assert len(data.shape) == 2, "Please pass a TxN numpy matrix."
+    assert len(data.shape) == 2, 'Please pass a TxN numpy matrix.'
 
-    print("Computing spatial coherence measure.")
+    print('Computing spatial coherence measure.')
 
     # Downsample data if it contains too many grid points
     if data.shape[1] > num_coarse:
-        print(f"""Too many grid points ({data.shape[1]}).
-        Using {num_coarse} grid points instead.""")
+        print(
+            f"""Too many grid points ({data.shape[1]}).
+        Using {num_coarse} grid points instead."""
+        )
         data = coarse_grain_data(data, num_coarse)
 
     # If data contains only phases, map it onto the complex plane.
@@ -113,19 +120,18 @@ def globaldist(data: np.ndarray,
         data = transform_phases(data)
 
     # Get maximal distance
-    print("Computing the maximal distance. This may take a few seconds.")
+    print('Computing the maximal distance. This may take a few seconds.')
     max_distance = compute_maximal_distance(data)
 
     # Compute the histograms
-    print("Computing histograms. This may take a few seconds.")
+    print('Computing histograms. This may take a few seconds.')
     histograms = compute_normalized_distance_histograms(data, max_distance, nbins)
     return np.sqrt(histograms[:, 0])
 
 
-def temporal(data: np.ndarray,
-             nbins: int = 100,
-             phases: bool = False,
-             num_coarse: int = 1500) -> np.ndarray:
+def temporal(
+    data: np.ndarray, nbins: int = 100, phases: bool = False, num_coarse: int = 1500
+) -> np.ndarray:
     """
     Calculate temporal correlation coefficients.
 
@@ -136,17 +142,19 @@ def temporal(data: np.ndarray,
     :returns: numpy array with histogram data
     """
 
-    print("Computing temporal coherence measure.")
+    print('Computing temporal coherence measure.')
 
-    assert len(data.shape) in [2, 3], "Please pass a TxN or TxN1xN2 numpy matrix."
+    assert len(data.shape) in [2, 3], 'Please pass a TxN or TxN1xN2 numpy matrix.'
 
     # Flatten data if it has two spatial dimensions
     data = data.reshape((data.shape[0], -1))
 
     # Downsample data if it contains too many grid points
     if data.shape[1] > num_coarse:
-        print(f"""Too many grid points ({data.shape[1]}).
-        Using {num_coarse} grid points instead.""")
+        print(
+            f"""Too many grid points ({data.shape[1]}).
+        Using {num_coarse} grid points instead."""
+        )
         data = coarse_grain_data(data, num_coarse)
 
     # If data contains only phases, map it onto the complex plane.
