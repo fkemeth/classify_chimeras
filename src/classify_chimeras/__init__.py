@@ -31,15 +31,13 @@ For temporal correlation, use correlation coefficients.
 #                                                                             #
 ###############################################################################
 
-import sys
-from time import time
 import numpy as np
-
-from tqdm.auto import tqdm
 
 from classify_chimeras.utils import transform_phases, compute_curvature, \
     compute_maximal_curvature, compute_normalized_curvature_histograms, \
-    coarse_grain_data, compute_distances, compute_normalized_distance_histograms
+    coarse_grain_data, compute_normalized_distance_histograms, \
+    compute_maximal_distance, compute_pairwise_correlation_coefficients, \
+    compute_normalized_correlation_histogram
 
 
 def spatial(data: np.ndarray,
@@ -61,7 +59,7 @@ def spatial(data: np.ndarray,
 
     print("Computing spatial coherence measure.")
 
-    # If A contains only phases, map it onto the complex plane.
+    # If data contains only phases, map it onto the complex plane.
     if phases is True:
         data = transform_phases(data)
 
@@ -107,19 +105,13 @@ def globaldist(data: np.ndarray,
     if data.shape[1] > num_coarse:
         data = coarse_grain_data(data, num_coarse)
 
-    # If A contains only phases, map it onto the complex plane.
+    # If data contains only phases, map it onto the complex plane.
     if phases is True:
         data = transform_phases(data)
 
-    (num_time_steps, _) = data.shape
-
     # Get maximal distance
     print("Computing the maximal distance. This may take a few seconds.")
-    max_distance = 0.0
-    for time_step in tqdm(range(num_time_steps)):
-        distances = compute_distances(data[time_step])
-        if np.max(distances) > max_distance:
-            max_distance = np.max(distances)
+    max_distance = compute_maximal_distance(data)
 
     # Compute the histograms
     print("Computing histograms. This may take a few seconds.")
@@ -142,52 +134,19 @@ def temporal(data: np.ndarray,
     """
 
     print("Computing temporal coherence measure.")
-    tstart = time()
 
     assert len(data.shape) in [2, 3], "Please pass a TxN or TxN1xN2 numpy matrix."
 
-    if len(data.shape) == 2:
-        (num_time_steps, num_grid_points) = data.shape
-    elif len(data.shape) == 3:
-        (num_time_steps, num_grid_points_x, num_grid_points_y) = data.shape
-        data = np.reshape(data, (num_time_steps, num_grid_points_x * num_grid_points_y))
-        num_grid_points = num_grid_points_x * num_grid_points_y
+    data = data.reshape((data.shape[0], -1))
 
-    while num_grid_points > num_coarse:
-        print("Too many oscillators (N>1500). Taking half the data.")
-        data = data[:, ::2]
-        (num_time_steps, num_grid_points) = data.shape
+    if data.shape[1] > num_coarse:
+        data = coarse_grain_data(data, num_coarse)
+
     if phases:
         data = transform_phases(data)
-    vacoma = np.zeros(int(num_grid_points * (num_grid_points - 1) / 2), dtype="complex")
-    idx = 0
-    print(
-        "Calculating all pairwise correlation coefficients. This may take a few seconds."
-    )
-    for x_position in range(num_grid_points - 1):
-        for y_position in range(x_position + 1, num_grid_points):
-            vacoma[idx] = np.mean(
-                np.conjugate(
-                    data[:, x_position] - np.mean(data[:, x_position])) * (
-                        data[:, y_position] - np.mean(data[:, y_position]))) / (
-                            np.std(
-                                np.conjugate(
-                                    data[:, x_position])) * np.std(data[:, y_position]))
-            idx += 1
-            if (idx) % (
-                    np.floor((num_grid_points * (num_grid_points - 1) / 2) / 100)) == 0:
-                sys.stdout.write(
-                    "\r %9.1f"
-                    % round(
-                        (time() - tstart) / (float(idx)) * (float(
-                            num_grid_points * (num_grid_points - 1) / 2) - float(idx)),
-                        1,
-                    )
-                    + " seconds left"
-                )
-                sys.stdout.flush()
-    histdat = np.histogram(np.abs(vacoma), bins=nbins, range=(0.0, 1.01))[0] / float(
-        num_grid_points * (num_grid_points - 1) / 2
-    )
-    print("\nDone!")
-    return histdat
+
+    pairwise_correlations = compute_pairwise_correlation_coefficients(data)
+
+    histogram = compute_normalized_correlation_histogram(pairwise_correlations, nbins)
+
+    return histogram

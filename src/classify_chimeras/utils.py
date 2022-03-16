@@ -31,9 +31,14 @@ For temporal correlation, use correlation coefficients.
 #                                                                             #
 ###############################################################################
 
+from itertools import combinations
+
 import numpy as np
+
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import pdist
+
+from scipy.stats.stats import pearsonr
 
 from tqdm.auto import tqdm
 
@@ -231,7 +236,38 @@ def compute_normalized_distance_histograms(data: np.ndarray,
     return histdat/normalization
 
 
-def compute_pairwise_correlation_coefficients():
+def compute_pairwise_correlation_coefficients(data: np.ndarray) -> np.ndarray:
     """
-    TODO
+    Compute all pariwise correlation coefficients.
+
+    :param data: array containing the data
+    :returns: pairwise correlation coefficients
     """
+    (_, num_grid_points) = data.shape
+
+    pairwise_correlations = np.zeros(
+        int(num_grid_points * (num_grid_points - 1) / 2), dtype="complex")
+    idx = 0
+    print(
+        "Calculating all pairwise correlation coefficients. This may take a few seconds."
+    )
+
+    for space_x, space_y in combinations(np.arange(num_grid_points), 2):
+        pairwise_correlations[idx] = pearsonr(data[:, space_x], data[:, space_y])
+        idx += 1
+
+    return pairwise_correlations
+
+
+def compute_normalized_correlation_histogram(pairwise_correlations: np.ndarray,
+                                             nbins: int) -> np.ndarray:
+    """
+    Compute histogram of all pariwise correlation coefficients.
+
+    :param data: array containing the data
+    :param nbins: number of histogram bins
+    :returns: histogram of pairwise correlation coefficients
+    """
+    histogram = np.histogram(np.abs(pairwise_correlations), bins=nbins, range=(0.0, 1.01),
+                             density=True)[0]
+    return histogram
