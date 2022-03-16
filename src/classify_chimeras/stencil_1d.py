@@ -51,12 +51,15 @@ def create_stencil(num_grid_points: int) -> csr_matrix:
     idxscolleft = np.empty(num_grid_points)
     idxscolleft = np.arange(0, num_grid_points) - 1
     idxscolleft[0] = num_grid_points - 1
-    stencil_data[num_grid_points: 3 * num_grid_points].fill(1.0)
+    stencil_data[num_grid_points:3 * num_grid_points].fill(1.0)
     idxtmp = idxs
     for _ in range(0, 2):
         idxs = np.append(idxs, idxtmp)
     idxscol = np.append(idxscol, idxscolright)
     idxscol = np.append(idxscol, idxscolleft)
-    stencil = csr_matrix((stencil_data, (idxs, idxscol)), shape=(
-        num_grid_points, num_grid_points), dtype=float)
+    stencil = csr_matrix(
+        (stencil_data, (idxs, idxscol)),
+        shape=(num_grid_points, num_grid_points),
+        dtype=float,
+    )
     return stencil
