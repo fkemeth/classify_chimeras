@@ -104,6 +104,8 @@ def globaldist(data: np.ndarray,
 
     # Downsample data if it contains too many grid points
     if data.shape[1] > num_coarse:
+        print(f"""Too many grid points ({data.shape[1]}).
+        Using {num_coarse} grid points instead.""")
         data = coarse_grain_data(data, num_coarse)
 
     # If data contains only phases, map it onto the complex plane.
@@ -143,6 +145,8 @@ def temporal(data: np.ndarray,
 
     # Downsample data if it contains too many grid points
     if data.shape[1] > num_coarse:
+        print(f"""Too many grid points ({data.shape[1]}).
+        Using {num_coarse} grid points instead.""")
         data = coarse_grain_data(data, num_coarse)
 
     # If data contains only phases, map it onto the complex plane.

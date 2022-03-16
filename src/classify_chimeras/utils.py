@@ -178,11 +178,7 @@ def coarse_grain_data(data: np.ndarray, num_coarse: int = 1500) -> np.ndarray:
     :param num_coarse: maximum number of oscillators to consider
     :returns: numpy array with downsampled data
     """
-    (_, num_grid_points) = data.shape
-    while num_grid_points > num_coarse:
-        print("Too many oscillatrs (N>1000). Coarse grained data is used.")
-        data = data[:, ::2]
-    return data
+    return data[:, np.random.choice(np.arange(num_coarse), num_coarse)]
 
 
 def compute_distances(data: np.ndarray) -> np.ndarray:
