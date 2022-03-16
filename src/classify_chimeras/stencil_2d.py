@@ -31,9 +31,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 
 
-def create_stencil(num_grid_point_x: int,
-                   num_grid_points_y: int,
-                   ninepoint: bool):
+def create_stencil(num_grid_point_x: int, num_grid_points_y: int, ninepoint: bool):
     """
     Create 2nd order finite difference stencil in two dimensions.
 
@@ -45,34 +43,51 @@ def create_stencil(num_grid_point_x: int,
     :returns: finite difference stencil as csr matrix
     """
     stencil_data = np.empty(5 * num_grid_point_x * num_grid_points_y)
-    stencil_data[0: num_grid_point_x * num_grid_points_y].fill(-4.0)
+    stencil_data[0:num_grid_point_x * num_grid_points_y].fill(-4.0)
     idxs = np.empty(num_grid_point_x * num_grid_points_y)
-    idxs[0: num_grid_point_x *
-         num_grid_points_y] = np.arange(0, num_grid_point_x * num_grid_points_y)
+    idxs[0:num_grid_point_x * num_grid_points_y] = np.arange(
+        0, num_grid_point_x * num_grid_points_y
+    )
     idxscol = np.empty(num_grid_point_x * num_grid_points_y)
-    idxscol[0: num_grid_point_x *
-            num_grid_points_y] = np.arange(0, num_grid_point_x * num_grid_points_y)
-    stencil_data[num_grid_point_x * num_grid_points_y: 5 *
-                 num_grid_point_x * num_grid_points_y].fill(1.0)
+    idxscol[0:num_grid_point_x * num_grid_points_y] = np.arange(
+        0, num_grid_point_x * num_grid_points_y
+    )
+    stencil_data[
+        num_grid_point_x * num_grid_points_y: 5 * num_grid_point_x * num_grid_points_y
+    ].fill(1.0)
     idxscolright = np.empty(num_grid_point_x * num_grid_points_y)
     idxscolright = np.arange(0, num_grid_point_x * num_grid_points_y) + 1.0
-    idxscolright[np.where(
-        idxscolright / num_grid_points_y - np.trunc(
-            idxscolright / num_grid_points_y) == 0)] = (
-                idxscolright[np.where(idxscolright / num_grid_points_y -
-                                      np.trunc(idxscolright / num_grid_points_y) == 0)]
-                - num_grid_points_y)
+    idxscolright[
+        np.where(
+            idxscolright / num_grid_points_y
+            - np.trunc(idxscolright / num_grid_points_y)
+            == 0
+        )
+    ] = (
+        idxscolright[
+            np.where(
+                idxscolright / num_grid_points_y
+                - np.trunc(idxscolright / num_grid_points_y)
+                == 0
+            )
+        ]
+        - num_grid_points_y
+    )
     idxscolright[np.where(idxscolright == -num_grid_points_y)] = 0
     idxscolleft = np.empty(num_grid_point_x * num_grid_points_y)
     idxscolleft = np.arange(0, num_grid_point_x * num_grid_points_y) - 1
     idxscolleft[
-        np.where((idxscolleft + 1.0) / num_grid_points_y -
-                 np.trunc((idxscolleft + 1.0) / num_grid_points_y) == 0)
+        np.where(
+            (idxscolleft + 1.0) / num_grid_points_y
+            - np.trunc((idxscolleft + 1.0) / num_grid_points_y)
+            == 0
+        )
     ] = (
         idxscolleft[
             np.where(
-                (idxscolleft + 1.0) / num_grid_points_y -
-                np.trunc((idxscolleft + 1.0) / num_grid_points_y) == 0
+                (idxscolleft + 1.0) / num_grid_points_y
+                - np.trunc((idxscolleft + 1.0) / num_grid_points_y)
+                == 0
             )
         ]
         + num_grid_points_y
@@ -83,10 +98,12 @@ def create_stencil(num_grid_point_x: int,
         num_grid_point_x * num_grid_points_y + idxscoltop[np.where(idxscoltop < 0)]
     )
     idxscolbottom = np.empty(num_grid_point_x * num_grid_points_y)
-    idxscolbottom = np.arange(0, num_grid_point_x * num_grid_points_y) + num_grid_points_y
+    idxscolbottom = (
+        np.arange(0, num_grid_point_x * num_grid_points_y) + num_grid_points_y
+    )
     idxscolbottom[np.where(idxscolbottom >= num_grid_point_x * num_grid_points_y)] = (
-        idxscolbottom[np.where(idxscolbottom >= num_grid_point_x * num_grid_points_y)
-                      ] - num_grid_point_x * num_grid_points_y
+        idxscolbottom[np.where(idxscolbottom >= num_grid_point_x * num_grid_points_y)]
+        - num_grid_point_x * num_grid_points_y
     )
     idxtmp = idxs
     for _ in range(0, 4):
@@ -98,75 +115,97 @@ def create_stencil(num_grid_point_x: int,
     if ninepoint:
         stencil_data = np.empty(9 * num_grid_point_x * num_grid_points_y)
         stencil_data[0: num_grid_point_x * num_grid_points_y].fill(-20.0)
-        stencil_data[num_grid_point_x * num_grid_points_y: 5 *
-                     num_grid_point_x * num_grid_points_y].fill(4.0)
-        stencil_data[5 * num_grid_point_x * num_grid_points_y: 9 *
-                     num_grid_point_x * num_grid_points_y].fill(1.0)
+        stencil_data[
+            num_grid_point_x
+            * num_grid_points_y: 5
+            * num_grid_point_x
+            * num_grid_points_y
+        ].fill(4.0)
+        stencil_data[
+            5
+            * num_grid_point_x
+            * num_grid_points_y: 9
+            * num_grid_point_x
+            * num_grid_points_y
+        ].fill(1.0)
         for _ in range(0, 4):
             idxs = np.append(idxs, idxtmp)
         idxscol9 = np.empty(num_grid_point_x * num_grid_points_y)
-        idxscol9 = np.arange(0, num_grid_point_x * num_grid_points_y) - \
-            num_grid_points_y - 1  # left top
-        idxscol9[np.where(idxscol9 < 0)] = num_grid_point_x * \
-            num_grid_points_y + idxscol9[np.where(idxscol9 < 0)]
+        idxscol9 = (
+            np.arange(0, num_grid_point_x * num_grid_points_y) - num_grid_points_y - 1
+        )  # left top
+        idxscol9[np.where(idxscol9 < 0)] = (
+            num_grid_point_x * num_grid_points_y + idxscol9[np.where(idxscol9 < 0)]
+        )
         idxscol9[
             np.where(
-                (idxscol9 + float(num_grid_points_y) + 1.0) / num_grid_points_y -
-                np.trunc((idxscol9 + float(num_grid_points_y) + 1.0) / num_grid_points_y)
+                (idxscol9 + float(num_grid_points_y) + 1.0) / num_grid_points_y
+                - np.trunc(
+                    (idxscol9 + float(num_grid_points_y) + 1.0) / num_grid_points_y
+                )
                 == 0
             )
         ] = (
             idxscol9[
                 np.where(
-                    (idxscol9 + float(num_grid_points_y) + 1.0) / num_grid_points_y -
-                    np.trunc(
-                        (idxscol9 + float(num_grid_points_y) + 1.0) / num_grid_points_y)
+                    (idxscol9 + float(num_grid_points_y) + 1.0) / num_grid_points_y
+                    - np.trunc(
+                        (idxscol9 + float(num_grid_points_y) + 1.0) / num_grid_points_y
+                    )
                     == 0
                 )
             ]
             + num_grid_points_y
         )
         idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)] = (
-            idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)] -
-            num_grid_point_x * num_grid_points_y
+            idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)]
+            - num_grid_point_x * num_grid_points_y
         )
         idxscol9[0] = num_grid_point_x * num_grid_points_y - 1
         idxscol = np.append(idxscol, idxscol9)
-        idxscol9 = np.arange(0, num_grid_point_x * num_grid_points_y) - \
-            num_grid_points_y + 1  # right top
+        idxscol9 = (
+            np.arange(0, num_grid_point_x * num_grid_points_y) - num_grid_points_y + 1
+        )  # right top
         idxscol9[-1] = num_grid_point_x * num_grid_points_y - 2 * num_grid_points_y
-        idxscol9[np.where(idxscol9 < 0)] = num_grid_point_x * \
-            num_grid_points_y + idxscol9[np.where(idxscol9 < 0)]
+        idxscol9[np.where(idxscol9 < 0)] = (
+            num_grid_point_x * num_grid_points_y + idxscol9[np.where(idxscol9 < 0)]
+        )
         idxscol9[
             np.where(
-                (idxscol9 + float(num_grid_points_y)) / num_grid_points_y -
-                np.trunc((idxscol9 + float(num_grid_points_y)) / num_grid_points_y) == 0
+                (idxscol9 + float(num_grid_points_y)) / num_grid_points_y
+                - np.trunc((idxscol9 + float(num_grid_points_y)) / num_grid_points_y)
+                == 0
             )
         ] = (
             idxscol9[
                 np.where(
-                    (idxscol9 + float(num_grid_points_y)) / num_grid_points_y -
-                    np.trunc((idxscol9 + float(num_grid_points_y)) / num_grid_points_y)
+                    (idxscol9 + float(num_grid_points_y)) / num_grid_points_y
+                    - np.trunc(
+                        (idxscol9 + float(num_grid_points_y)) / num_grid_points_y
+                    )
                     == 0
                 )
             ]
             - num_grid_points_y
         )
-        idxscol9[np.where(idxscol9 < 0)] = idxscol9[np.where(idxscol9 < 0)] + \
-            num_grid_point_x * num_grid_points_y
+        idxscol9[np.where(idxscol9 < 0)] = (
+            idxscol9[np.where(idxscol9 < 0)] + num_grid_point_x * num_grid_points_y
+        )
         idxscol9[-1] = num_grid_point_x * num_grid_points_y - 2 * num_grid_points_y
         idxscol = np.append(idxscol, idxscol9)
-        idxscol9 = np.arange(0, num_grid_point_x * num_grid_points_y) + \
-            num_grid_points_y - 1  # left bottom
+        idxscol9 = (
+            np.arange(0, num_grid_point_x * num_grid_points_y) + num_grid_points_y - 1
+        )  # left bottom
         idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)] = (
-            idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)] -
-            num_grid_point_x * num_grid_points_y
+            idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)]
+            - num_grid_point_x * num_grid_points_y
         )
         idxscol9[
             np.where(
                 (idxscol9 - float(num_grid_points_y) + 1.0) / num_grid_points_y
                 - np.trunc(
-                    (idxscol9 - float(num_grid_points_y) + 1.0) / num_grid_points_y)
+                    (idxscol9 - float(num_grid_points_y) + 1.0) / num_grid_points_y
+                )
                 == 0
             )
         ] = (
@@ -174,47 +213,57 @@ def create_stencil(num_grid_point_x: int,
                 np.where(
                     (idxscol9 - float(num_grid_points_y) + 1.0) / num_grid_points_y
                     - np.trunc(
-                        (idxscol9 - float(num_grid_points_y) + 1.0) / num_grid_points_y)
+                        (idxscol9 - float(num_grid_points_y) + 1.0) / num_grid_points_y
+                    )
                     == 0
                 )
             ]
             + num_grid_points_y
         )
         idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)] = (
-            idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)] -
-            num_grid_point_x * num_grid_points_y
+            idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)]
+            - num_grid_point_x * num_grid_points_y
         )
         idxscol9[0] = 2 * num_grid_points_y - 1
         idxscol = np.append(idxscol, idxscol9)
-        idxscol9 = np.arange(0, num_grid_point_x * num_grid_points_y) + \
-            num_grid_points_y + 1  # right bottom
+        idxscol9 = (
+            np.arange(0, num_grid_point_x * num_grid_points_y) + num_grid_points_y + 1
+        )  # right bottom
         idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)] = (
-            idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)] -
-            num_grid_point_x * num_grid_points_y
+            idxscol9[np.where(idxscol9 >= num_grid_point_x * num_grid_points_y)]
+            - num_grid_point_x * num_grid_points_y
         )
         idxscol9[
             np.where(
-                (idxscol9 - float(num_grid_points_y)) / num_grid_points_y -
-                np.trunc((idxscol9 - float(num_grid_points_y)) / num_grid_points_y) == 0
+                (idxscol9 - float(num_grid_points_y)) / num_grid_points_y
+                - np.trunc((idxscol9 - float(num_grid_points_y)) / num_grid_points_y)
+                == 0
             )
         ] = (
             idxscol9[
                 np.where(
-                    (idxscol9 - float(num_grid_points_y)) / num_grid_points_y -
-                    np.trunc((idxscol9 - float(num_grid_points_y)) / num_grid_points_y)
+                    (idxscol9 - float(num_grid_points_y)) / num_grid_points_y
+                    - np.trunc(
+                        (idxscol9 - float(num_grid_points_y)) / num_grid_points_y
+                    )
                     == 0
                 )
             ]
             - num_grid_points_y
         )
-        idxscol9[np.where(idxscol9 < 0)] = idxscol9[np.where(idxscol9 < 0)] + \
-            num_grid_point_x * num_grid_points_y
+        idxscol9[np.where(idxscol9 < 0)] = (
+            idxscol9[np.where(idxscol9 < 0)] + num_grid_point_x * num_grid_points_y
+        )
         idxscol9[-1] = 0
         idxscol = np.append(idxscol, idxscol9)
-    stencil = csr_matrix((stencil_data, (idxs, idxscol)),
-                         shape=(num_grid_point_x * num_grid_points_y,
-                                num_grid_point_x * num_grid_points_y),
-                         dtype=float)
+    stencil = csr_matrix(
+        (stencil_data, (idxs, idxscol)),
+        shape=(
+            num_grid_point_x * num_grid_points_y,
+            num_grid_point_x * num_grid_points_y,
+        ),
+        dtype=float,
+    )
     if ninepoint:
         stencil = stencil / 6.0
     return stencil
