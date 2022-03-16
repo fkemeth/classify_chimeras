@@ -31,25 +31,32 @@ import numpy as np
 from scipy.sparse import csr_matrix
 
 
-def create_stencil(N):
-    """Create finite difference stencil."""
-    stdata = np.empty(3 * N)
-    stdata[0:N].fill(-2.0)
-    idxs = np.empty(N)
-    idxs[0:N] = np.arange(0, N)
-    idxscol = np.empty(N)
-    idxscol[0:N] = np.arange(0, N)
-    idxscolrechts = np.empty(N)
-    idxscolrechts = np.arange(0, N) + 1
-    idxscolrechts[-1] = 0
-    idxscollinks = np.empty(N)
-    idxscollinks = np.arange(0, N) - 1
-    idxscollinks[0] = N - 1
-    stdata[N : 3 * N].fill(1.0)
+def create_stencil(num_grid_points: int) -> csr_matrix:
+    """
+    Create 2nd order finite difference stencil in one dimension.
+
+    :param num_grid_points: integer with the number of grid points of
+                            spatial axis
+    :returns: finite difference stencil as csr matrix
+    """
+    stencil_data = np.empty(3 * num_grid_points)
+    stencil_data[0:num_grid_points].fill(-2.0)
+    idxs = np.empty(num_grid_points)
+    idxs[0:num_grid_points] = np.arange(0, num_grid_points)
+    idxscol = np.empty(num_grid_points)
+    idxscol[0:num_grid_points] = np.arange(0, num_grid_points)
+    idxscolright = np.empty(num_grid_points)
+    idxscolright = np.arange(0, num_grid_points) + 1
+    idxscolright[-1] = 0
+    idxscolleft = np.empty(num_grid_points)
+    idxscolleft = np.arange(0, num_grid_points) - 1
+    idxscolleft[0] = num_grid_points - 1
+    stencil_data[num_grid_points: 3 * num_grid_points].fill(1.0)
     idxtmp = idxs
-    for x in range(0, 2):
+    for _ in range(0, 2):
         idxs = np.append(idxs, idxtmp)
-    idxscol = np.append(idxscol, idxscolrechts)
-    idxscol = np.append(idxscol, idxscollinks)
-    stencil = csr_matrix((stdata, (idxs, idxscol)), shape=(N, N), dtype=float)
+    idxscol = np.append(idxscol, idxscolright)
+    idxscol = np.append(idxscol, idxscolleft)
+    stencil = csr_matrix((stencil_data, (idxs, idxscol)), shape=(
+        num_grid_points, num_grid_points), dtype=float)
     return stencil
