@@ -33,7 +33,7 @@ For temporal correlation, use correlation coefficients.
 
 import numpy as np
 from scipy.sparse import csr_matrix
-from scipy.spatial.distance import pdist, squareform
+from scipy.spatial.distance import pdist
 
 from tqdm.auto import tqdm
 
@@ -189,7 +189,23 @@ def compute_distances(data: np.ndarray) -> np.ndarray:
     :param data: numpy array containing the data
     :returns: numpy array containing distance values
     """
-    return squareform(pdist(data[:, np.newaxis], metric='cityblock'))
+    return pdist(data[:, np.newaxis], metric='cityblock')
+
+
+def compute_maximal_distance(data: np.ndarray) -> float:
+    """
+    Compute the maximal distance contained in the data.
+
+    :param data: array containing the data
+    :returns: maximal distance
+    """
+    (num_time_steps, _) = data.shape
+    max_distance = 0.0
+    for time_step in tqdm(range(num_time_steps)):
+        distances = compute_distances(data[time_step])
+        if np.max(distances) > max_distance:
+            max_distance = np.max(distances)
+    return max_distance
 
 
 def compute_normalized_distance_histograms(data: np.ndarray,
@@ -211,5 +227,11 @@ def compute_normalized_distance_histograms(data: np.ndarray,
         histdat[time_step, :] = np.histogram(
             distances, nbins, range=(0, max_distance))[0]
 
-    normalization = float(num_grid_points * (num_grid_points - 1))
+    normalization = float(num_grid_points * (num_grid_points - 1)/2)
     return histdat/normalization
+
+
+def compute_pairwise_correlation_coefficients():
+    """
+    TODO
+    """
