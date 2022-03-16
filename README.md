@@ -22,7 +22,7 @@ DOCUMENTATION
 
 This python package contains functions to classify chimera states,
 non-linear hybrid states of coexisting coherence and incoherence.
-In partical, this package offers three functions, following the paper
+In particular, this package offers three functions, following the paper
 
 "A classification scheme for chimera states"
 (http://dx.doi.org/10.1063/1.4959804)
@@ -112,7 +112,7 @@ LICENCE
 
 
 This work is licenced under GNU General Public License v3.
-Plase cite
+Please cite
 
 "A classification scheme for chimera states"
 F.P. Kemeth et al.
