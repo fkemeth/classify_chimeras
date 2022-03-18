@@ -284,7 +284,8 @@ def compute_normalized_correlation_histogram(
     :returns: histogram of pairwise correlation coefficients
     """
     normalization = len(pairwise_correlations)
-    histogram = np.histogram(
-        np.abs(pairwise_correlations), bins=nbins, range=(0.0, 1.0+1e-3)
+    histogram = np.histogram(np.abs(pairwise_correlations)/np.max(
+        np.abs(pairwise_correlations)),
+        bins=nbins, range=(0.0, 1.0 + np.finfo(float).eps)
     )[0]
     return histogram / normalization

@@ -107,6 +107,18 @@ that we have the phases of this chimera state in a numpy matrix A.
 ![Distribution of temporal correlation coefficients](/images/kuramoto_h.jpg)
 
 
+Changelog v.2.0.0
+---------
+
+- Refactored code for the correlation measures.
+- Restructured code to confirm to pypi package layout.
+- Use random subset of grid points when coarse graining data.
+- Adjusted upper bound in temporal correlation histogram to 1+epsilon.
+- Included example using kuramoto_chimera package.
+- Addex notebook example.
+- Added unit tests.
+
+
 LICENCE
 ---------
 
