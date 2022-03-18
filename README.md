@@ -1,11 +1,3 @@
-REQUIREMENTS
----------
-
-Following packages are required:
-
-- numpy v1.11.0 or newer
-- scipy v0.17 or newer
-
 INSTALLATION
 ---------
 
@@ -15,14 +7,16 @@ Via pip:
 
 Via source
 
-(https://github.com/fkemeth/classify_chimeras)
+    git clone https://github.com/fkemeth/classify_chimeras
+    cd classify_chimeras
+    pip install .
 
 DOCUMENTATION
 ---------
 
 This python package contains functions to classify chimera states,
 non-linear hybrid states of coexisting coherence and incoherence.
-In partical, this package offers three functions, following the paper
+In particular, this package offers three functions, following the paper
 
 "A classification scheme for chimera states"
 (http://dx.doi.org/10.1063/1.4959804)
@@ -107,12 +101,24 @@ that we have the phases of this chimera state in a numpy matrix A.
 ![Distribution of temporal correlation coefficients](/images/kuramoto_h.jpg)
 
 
+Changelog v.2.0.0
+---------
+
+- Refactored code for the correlation measures.
+- Restructured code to confirm to pypi package layout.
+- Use random subset of grid points when coarse graining data.
+- Adjusted upper bound in temporal correlation histogram to 1+epsilon.
+- Included example using kuramoto_chimera package.
+- Added notebook example.
+- Added unit tests.
+
+
 LICENCE
 ---------
 
 
 This work is licenced under GNU General Public License v3.
-Plase cite
+Please cite
 
 "A classification scheme for chimera states"
 F.P. Kemeth et al.
