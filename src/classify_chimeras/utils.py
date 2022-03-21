@@ -188,6 +188,9 @@ def compute_distances(data: np.ndarray) -> np.ndarray:
     :param data: numpy array containing the data
     :returns: numpy array containing distance values
     """
+    if data.dtype == 'complex':
+        return np.sqrt(pdist(data[:, np.newaxis].real, metric='cityblock')**2 +
+                       pdist(data[:, np.newaxis].imag, metric='cityblock')**2)
     return pdist(data[:, np.newaxis], metric='cityblock')
 
 
